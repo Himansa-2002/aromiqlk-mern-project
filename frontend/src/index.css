@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Everything else lives inline in each .jsx file as Tailwind classes —
+   this file only pulls in Tailwind itself, matching the "CSS in the JSX"
+   approach used across the project. */
+
+body {
+  background-color: #0b0906;
+  font-family: "Jost", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
