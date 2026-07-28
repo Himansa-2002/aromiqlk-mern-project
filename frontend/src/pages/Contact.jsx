@@ -6,12 +6,23 @@ export default function Contact() {
 
   const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleSubmit = (e) => {
+  const [status, setStatus] = useState(null); // null | 'sending' | 'success' | 'error'
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // UI-only for now — will POST to /api/contact once the backend is wired up
-    console.log("Contact form submitted:", form);
-    alert("Thanks for reaching out! We'll connect this form to the backend next.");
-    setForm({ fullName: "", phone: "", email: "", subject: "", message: "" });
+    setStatus("sending");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error();
+      setStatus("success");
+      setForm({ fullName: "", phone: "", email: "", subject: "", message: "" });
+    } catch {
+      setStatus("error");
+    }
   };
 
   const infoRow = (icon, label, value) => (
@@ -96,9 +107,11 @@ export default function Contact() {
                 <label className="text-xs uppercase tracking-wider text-gold">Message</label>
                 <textarea name="message" value={form.message} onChange={handleChange} rows={5} placeholder="Write your message..." required className="bg-ink border border-line px-3.5 py-3 text-sm text-warm outline-none focus:border-gold resize-y" />
               </div>
-              <button type="submit" className="px-8 py-4 text-xs uppercase tracking-widest bg-gradient-to-br from-gold-bright to-gold-deep text-ink font-medium hover:brightness-110 transition">
-                Send Message
+              <button type="submit" disabled={status === "sending"} className="px-8 py-4 text-xs uppercase tracking-widest bg-gradient-to-br from-gold-bright to-gold-deep text-ink font-medium hover:brightness-110 transition disabled:opacity-60">
+                {status === "sending" ? "Sending..." : "Send Message"}
               </button>
+              {status === "success" && <p className="text-gold-bright text-sm">Thanks for reaching out — we'll be in touch soon.</p>}
+              {status === "error" && <p className="text-red-400 text-sm">Something went wrong — please try again.</p>}
             </form>
           </div>
 
