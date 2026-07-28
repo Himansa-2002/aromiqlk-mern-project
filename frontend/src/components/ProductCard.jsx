@@ -1,11 +1,15 @@
 import { Link } from "react-router-dom";
 
 const ProductCard = ({ product }) => {
-  const { brand, name, price, oldPrice, rating = 5, badge } = product;
+  const { name, price, oldPrice, rating = 5, badge, slug } = product;
+
+  // brand comes back populated as { name, slug } from the API,
+  // but may still be a plain string during local/offline testing.
+  const brandName = typeof product.brand === "object" ? product.brand?.name : product.brand;
 
   return (
     <Link
-      to="/product/1"
+      to={`/product/${slug}`}
       className="group border border-line bg-panel hover:border-gold transition-colors duration-300"
     >
       <div className="relative aspect-[1/1.15] bg-gradient-to-br from-gold/10 to-transparent flex items-center justify-center">
@@ -23,10 +27,10 @@ const ProductCard = ({ product }) => {
         </div>
       </div>
       <div className="p-4 pb-5">
-        <span className="text-[11px] uppercase tracking-wider text-gold">{brand}</span>
+        <span className="text-[11px] uppercase tracking-wider text-gold">{brandName}</span>
         <h4 className="font-display text-lg mt-1.5 mb-2.5 text-warm">{name}</h4>
         <div className="text-gold text-xs mb-2 tracking-wider">
-          {"★".repeat(rating)}{"☆".repeat(5 - rating)}
+          {"★".repeat(Math.round(rating))}{"☆".repeat(5 - Math.round(rating))}
         </div>
         <div className="flex items-center justify-between">
           <span className="font-display text-xl text-gold-bright">

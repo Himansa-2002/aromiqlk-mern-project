@@ -1,34 +1,62 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
 
-const product = {
-  brand: "Lattafa",
-  name: "Khamrah Qahwa",
-  price: 8900,
-  rating: 5,
-  reviews: 42,
-  desc: "A warm, coffee-laced oriental fragrance layered with cinnamon, cardamom and rich amber — Khamrah Qahwa opens with spiced espresso and settles into a deep, long-lasting base of oud and vanilla.",
-  top: "Cardamom, Cinnamon, Coffee",
-  middle: "Praline, Amber, Saffron",
-  base: "Oud, Vanilla, Musk",
-  sizes: [
-    { label: "5ml Decant", price: 1800 },
-    { label: "10ml Decant", price: 3200 },
-    { label: "Full Bottle 100ml", price: 8900 },
-  ],
-};
-
-const related = [
-  { brand: "Armaf", name: "Club de Nuit Intense", price: 7200 },
-  { brand: "Afnan", name: "Supremacy Silver", price: 6500 },
-  { brand: "Al Haramain", name: "Amber Oud Gold", price: 11400 },
-  { brand: "Lattafa", name: "Yara Moi", price: 7500 },
-];
-
 export default function ProductDetails() {
+  const { slug } = useParams();
+
+  const [product, setProduct] = useState(null);
+  const [related, setRelated] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [activeSize, setActiveSize] = useState(0);
   const [qty, setQty] = useState(1);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    setProduct(null);
+    setActiveSize(0);
+    setQty(1);
+
+    fetch(`/api/products/${slug}`)
+      .then((r) => {
+        if (!r.ok) throw new Error("Product not found");
+        return r.json();
+      })
+      .then((data) => {
+        setProduct(data);
+        return fetch(`/api/products/${data._id}/related`);
+      })
+      .then((r) => (r && r.ok ? r.json() : []))
+      .then((relatedData) => setRelated(relatedData || []))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <section className="py-24">
+        <div className="max-w-6xl mx-auto px-8 text-center text-muted text-sm">Loading...</div>
+      </section>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <section className="py-24">
+        <div className="max-w-6xl mx-auto px-8 text-center">
+          <p className="text-red-400 text-sm mb-4">{error || "Product not found."}</p>
+          <Link to="/shop" className="text-gold text-sm">← Back to Shop</Link>
+        </div>
+      </section>
+    );
+  }
+
+  const brandName = typeof product.brand === "object" ? product.brand?.name : product.brand;
+  const sizes = product.sizes?.length ? product.sizes : [{ label: "Full Bottle", price: product.price }];
+  const displayPrice = sizes[activeSize]?.price ?? product.price;
 
   return (
     <>
@@ -55,31 +83,33 @@ export default function ProductDetails() {
           </div>
 
           <div>
-            <span className="text-xs uppercase tracking-wider text-gold">{product.brand}</span>
+            <span className="text-xs uppercase tracking-wider text-gold">{brandName}</span>
             <h1 className="font-display text-3xl md:text-4xl mt-2.5 mb-3">{product.name}</h1>
             <div className="text-gold text-sm mb-4">
-              {"★".repeat(product.rating)} <span className="text-muted text-xs">({product.reviews} reviews)</span>
+              {"★".repeat(Math.round(product.rating || 0))} <span className="text-muted text-xs">({product.reviewCount || 0} reviews)</span>
             </div>
-            <p className="text-muted text-sm leading-relaxed mb-6">{product.desc}</p>
+            <p className="text-muted text-sm leading-relaxed mb-6">{product.description}</p>
 
-            <div className="flex gap-8 flex-wrap mb-7">
-              <div>
-                <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Top Notes</h5>
-                <p className="text-xs text-muted max-w-[160px]">{product.top}</p>
+            {product.notes && (
+              <div className="flex gap-8 flex-wrap mb-7">
+                <div>
+                  <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Top Notes</h5>
+                  <p className="text-xs text-muted max-w-[160px]">{product.notes.top}</p>
+                </div>
+                <div>
+                  <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Middle Notes</h5>
+                  <p className="text-xs text-muted max-w-[160px]">{product.notes.middle}</p>
+                </div>
+                <div>
+                  <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Base Notes</h5>
+                  <p className="text-xs text-muted max-w-[160px]">{product.notes.base}</p>
+                </div>
               </div>
-              <div>
-                <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Middle Notes</h5>
-                <p className="text-xs text-muted max-w-[160px]">{product.middle}</p>
-              </div>
-              <div>
-                <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Base Notes</h5>
-                <p className="text-xs text-muted max-w-[160px]">{product.base}</p>
-              </div>
-            </div>
+            )}
 
             <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2.5">Select Size</h5>
             <div className="flex gap-3 mb-7 flex-wrap">
-              {product.sizes.map((s, i) => (
+              {sizes.map((s, i) => (
                 <button
                   key={s.label}
                   onClick={() => setActiveSize(i)}
@@ -93,7 +123,7 @@ export default function ProductDetails() {
             </div>
 
             <div className="font-display text-2xl text-gold-bright mb-7">
-              Rs {product.sizes[activeSize].price.toLocaleString()}
+              Rs {displayPrice.toLocaleString()}
             </div>
 
             <div className="flex items-center gap-5 mb-7">
@@ -102,7 +132,9 @@ export default function ProductDetails() {
                 <span className="w-10 text-center text-sm">{qty}</span>
                 <button onClick={() => setQty((q) => q + 1)} className="w-9 h-10 text-gold text-lg">+</button>
               </div>
-              <span className="text-green-400 text-sm">● In Stock</span>
+              <span className="text-green-400 text-sm">
+                {(product.stock ?? 1) > 0 ? "● In Stock" : "● Out of Stock"}
+              </span>
             </div>
 
             <div className="flex gap-3.5 flex-wrap mb-7">
@@ -112,8 +144,8 @@ export default function ProductDetails() {
             </div>
 
             <div className="text-sm text-muted">
-              <div className="flex justify-between py-2 border-b border-line"><span>Brand</span><span>{product.brand}</span></div>
-              <div className="flex justify-between py-2 border-b border-line"><span>Availability</span><span>In Stock</span></div>
+              <div className="flex justify-between py-2 border-b border-line"><span>Brand</span><span>{brandName}</span></div>
+              <div className="flex justify-between py-2 border-b border-line"><span>Availability</span><span>{(product.stock ?? 1) > 0 ? "In Stock" : "Out of Stock"}</span></div>
               <div className="flex justify-between py-2 border-b border-line"><span>Delivery</span><span>2–5 working days, islandwide</span></div>
             </div>
           </div>
@@ -121,17 +153,19 @@ export default function ProductDetails() {
         </div>
       </section>
 
-      <section className="py-20">
-        <div className="max-w-6xl mx-auto px-8">
-          <div className="text-center max-w-lg mx-auto mb-12">
-            <span className="text-xs uppercase tracking-[0.3em] text-gold">You May Also Like</span>
-            <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Related Products</h2>
+      {related.length > 0 && (
+        <section className="py-20">
+          <div className="max-w-6xl mx-auto px-8">
+            <div className="text-center max-w-lg mx-auto mb-12">
+              <span className="text-xs uppercase tracking-[0.3em] text-gold">You May Also Like</span>
+              <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Related Products</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {related.map((r) => <ProductCard product={r} key={r._id} />)}
+            </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {related.map((r) => <ProductCard product={r} key={r.name} />)}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
     </>
   );
 }
