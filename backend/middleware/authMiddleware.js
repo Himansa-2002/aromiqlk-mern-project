@@ -28,19 +28,20 @@ export const protect = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'User belonging to this token no longer exists',
+        message: 'User not found',
       });
     }
 
     if (!user.isActive) {
       return res.status(403).json({
         success: false,
-        message: 'Your account has been deactivated',
+        message: 'User account is deactivated',
       });
     }
 
     req.user = user;
-    next();
+
+    return next();
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({
@@ -56,6 +57,6 @@ export const protect = async (req, res, next) => {
       });
     }
 
-    next(error);
+    return next(error);
   }
 };

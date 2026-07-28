@@ -16,6 +16,11 @@ import bannerRoutes from './routes/banners.js';
 
 // Developer 2 routes
 import authRoutes from './routes/authRoutes.js';
+import cartRoutes from './routes/cartRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import wishlistRoutes from './routes/wishlistRoutes.js';
+import couponRoutes from './routes/couponRoutes.js';
+import adminCouponRoutes from './routes/adminCouponRoutes.js';
 
 // Error middleware
 import {
@@ -58,6 +63,12 @@ app.use('/api/banners', bannerRoutes);
 
 // Developer 2 authentication routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/coupons', couponRoutes);
+app.use('/api/admin/coupons', adminCouponRoutes);
+
 
 // Health-check route
 app.get('/api/health', (req, res) => {
