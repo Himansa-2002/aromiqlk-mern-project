@@ -1,74 +1,75 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
 
-export default function Shop() {
-  const [brandsList, setBrandsList] = useState([]);
-  const [categoriesList, setCategoriesList] = useState([]);
+const brandOptions = ["Lattafa", "Armaf", "Afnan", "Al Haramain", "Rasasi"];
 
-  const [brands, setBrands] = useState([]);       // selected Brand _ids
-  const [categories, setCategories] = useState([]); // selected Category _ids
+export default function Shop() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [brands, setBrands] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [genders, setGenders] = useState([]);
   const [tags, setTags] = useState([]);
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("default");
-  const [page, setPage] = useState(1);
 
-  const [products, setProducts] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Load brand/category options once, to build the filter sidebar and
-  // translate checkbox selections into the ObjectIds the API expects.
+  // Fetch product data from backend API on component mount
   useEffect(() => {
-    fetch("/api/brands").then((r) => r.json()).then(setBrandsList).catch(() => {});
-    fetch("/api/categories").then((r) => r.json()).then(setCategoriesList).catch(() => {});
-  }, []);
-
-  // Re-fetch products whenever any filter, sort, search, or page changes.
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (brands.length) brands.forEach((b) => params.append("brand", b));
-    if (categories.length) categories.forEach((c) => params.append("category", c));
-    if (genders.length) genders.forEach((g) => params.append("gender", g));
-    if (tags.length) tags.forEach((t) => params.append("tag", t));
-    if (priceMin) params.set("minPrice", priceMin);
-    if (priceMax) params.set("maxPrice", priceMax);
-    if (search) params.set("search", search);
-    params.set("sort", sort);
-    params.set("page", page);
-    params.set("limit", 9);
-
-    setLoading(true);
-    setError(null);
-
-    fetch(`/api/products?${params.toString()}`)
-      .then((r) => {
-        if (!r.ok) throw new Error("Failed to load products");
-        return r.json();
+    fetch("http://localhost:5000/api/products")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch products");
+        return res.json();
       })
       .then((data) => {
-        setProducts(data.items || []);
-        setTotal(data.total || 0);
-        setTotalPages(data.totalPages || 1);
+        const items = (data.items || data).map((p) => ({
+          ...p,
+          brand: p.brand?.name || p.brand,
+          category: p.category?.name || p.category,
+          tags: p.tags || [],
+        }));
+        setProducts(items);
+        setLoading(false);
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [brands, categories, genders, tags, priceMin, priceMax, search, sort, page]);
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
 
-  const toggle = (list, setList, value) => {
-    setPage(1);
+  const toggle = (list, setList, value) =>
     setList(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
-  };
 
   const clearFilters = () => {
-    setBrands([]); setCategories([]); setGenders([]); setTags([]);
-    setPriceMin(""); setPriceMax(""); setSearch(""); setSort("default"); setPage(1);
+    setBrands([]);
+    setCategories([]);
+    setGenders([]);
+    setTags([]);
+    setPriceMin("");
+    setPriceMax("");
+    setSearch("");
+    setSort("default");
   };
+
+  const filtered = useMemo(() => {
+    let list = products.filter((p) => {
+      if (brands.length && !brands.includes(p.brand)) return false;
+      if (categories.length && !categories.includes(p.category)) return false;
+      if (genders.length && !genders.includes(p.gender)) return false;
+      if (tags.length && !tags.some((t) => p.tags.includes(t))) return false;
+      if (priceMin && p.price < parseFloat(priceMin)) return false;
+      if (priceMax && p.price > parseFloat(priceMax)) return false;
+      if (search && !`${p.brand} ${p.name}`.toLowerCase().includes(search.toLowerCase())) return false;
+      return true;
+    });
+    if (sort === "price-asc") list = [...list].sort((a, b) => a.price - b.price);
+    if (sort === "price-desc") list = [...list].sort((a, b) => b.price - a.price);
+    if (sort === "new") list = [...list].sort((a, b) => b.tags.includes("new") - a.tags.includes("new"));
+    if (sort === "bestseller") list = [...list].sort((a, b) => b.tags.includes("bestseller") - a.tags.includes("bestseller"));
+    return list;
+  }, [products, brands, categories, genders, tags, priceMin, priceMax, search, sort]);
 
   const checkboxRow = (checked, onChange, label) => (
     <label className="flex items-center gap-2.5 text-sm text-muted py-1.5 cursor-pointer hover:text-warm">
@@ -76,7 +77,13 @@ export default function Shop() {
     </label>
   );
 
-  const findCategoryId = (name) => categoriesList.find((c) => c.name === name)?._id;
+  if (loading) {
+    return (
+      <section className="py-16">
+        <div className="max-w-6xl mx-auto px-8 text-center text-warm">Loading products...</div>
+      </section>
+    );
+  }
 
   return (
     <>
@@ -94,16 +101,14 @@ export default function Shop() {
           <aside className="border border-line bg-panel p-6 self-start md:sticky md:top-28">
             <div className="pb-5 border-b border-line">
               <h5 className="text-xs uppercase tracking-widest text-gold mb-3.5">Brand</h5>
-              {brandsList.map((b) =>
-                checkboxRow(brands.includes(b._id), () => toggle(brands, setBrands, b._id), b.name)
-              )}
+              {brandOptions.map((b) => checkboxRow(brands.includes(b), () => toggle(brands, setBrands, b), b))}
             </div>
 
             <div className="py-5 border-b border-line">
               <h5 className="text-xs uppercase tracking-widest text-gold mb-3.5">Category</h5>
-              {categoriesList.map((c) =>
-                checkboxRow(categories.includes(c._id), () => toggle(categories, setCategories, c._id), c.name)
-              )}
+              {checkboxRow(categories.includes("Oils"), () => toggle(categories, setCategories, "Oils"), "Perfume Oils")}
+              {checkboxRow(categories.includes("Gift Sets"), () => toggle(categories, setCategories, "Gift Sets"), "Gift Sets")}
+              {checkboxRow(categories.includes("Decants"), () => toggle(categories, setCategories, "Decants"), "Decants (5ml & 10ml)")}
             </div>
 
             <div className="py-5 border-b border-line">
@@ -116,9 +121,9 @@ export default function Shop() {
             <div className="py-5 border-b border-line">
               <h5 className="text-xs uppercase tracking-widest text-gold mb-3.5">Price Range (Rs)</h5>
               <div className="flex items-center gap-2.5">
-                <input type="number" placeholder="Min" value={priceMin} onChange={(e) => { setPriceMin(e.target.value); setPage(1); }} className="w-full bg-ink border border-line px-2.5 py-2 text-xs text-warm outline-none focus:border-gold" />
+                <input type="number" placeholder="Min" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} className="w-full bg-ink border border-line px-2.5 py-2 text-xs text-warm outline-none focus:border-gold" />
                 <span className="text-muted">—</span>
-                <input type="number" placeholder="Max" value={priceMax} onChange={(e) => { setPriceMax(e.target.value); setPage(1); }} className="w-full bg-ink border border-line px-2.5 py-2 text-xs text-warm outline-none focus:border-gold" />
+                <input type="number" placeholder="Max" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} className="w-full bg-ink border border-line px-2.5 py-2 text-xs text-warm outline-none focus:border-gold" />
               </div>
             </div>
 
@@ -138,9 +143,9 @@ export default function Shop() {
             <div className="flex flex-wrap items-center justify-between gap-5 mb-7">
               <div className="flex-1 min-w-[220px] flex items-center gap-2.5 border border-line bg-panel px-4 py-2.5">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-gold flex-shrink-0"><circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.6" /><path d="M21 21l-4.3-4.3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
-                <input type="text" placeholder="Search fragrances, brands, notes..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="flex-1 bg-transparent text-sm text-warm outline-none" />
+                <input type="text" placeholder="Search fragrances, brands, notes..." value={search} onChange={(e) => setSearch(e.target.value)} className="flex-1 bg-transparent text-sm text-warm outline-none" />
               </div>
-              <select value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }} className="bg-panel border border-line text-sm text-warm px-3.5 py-3">
+              <select value={sort} onChange={(e) => setSort(e.target.value)} className="bg-panel border border-line text-sm text-warm px-3.5 py-3">
                 <option value="default">Sort: Popular Products</option>
                 <option value="new">Sort: New Arrival</option>
                 <option value="bestseller">Sort: Best Selling</option>
@@ -149,46 +154,14 @@ export default function Shop() {
               </select>
             </div>
 
-            <p className="text-sm text-muted mb-5">{loading ? "Loading..." : `${total} result${total === 1 ? "" : "s"}`}</p>
+            <p className="text-sm text-muted mb-5">{filtered.length} result{filtered.length === 1 ? "" : "s"}</p>
 
-            {loading && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="aspect-[1/1.6] border border-line bg-panel animate-pulse" />
-                ))}
-              </div>
-            )}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              {filtered.map((p) => <ProductCard product={p} key={p.name} />)}
+            </div>
 
-            {!loading && error && (
-              <p className="text-red-400 text-sm text-center py-12">
-                Couldn't load products — is the backend running? ({error})
-              </p>
-            )}
-
-            {!loading && !error && products.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                {products.map((p) => <ProductCard product={p} key={p._id} />)}
-              </div>
-            )}
-
-            {!loading && !error && products.length === 0 && (
+            {filtered.length === 0 && (
               <p className="text-muted text-sm text-center py-12">No fragrances match your filters — try clearing some.</p>
-            )}
-
-            {!loading && !error && totalPages > 1 && (
-              <div className="flex justify-center gap-2 mt-14">
-                {Array.from({ length: totalPages }).map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setPage(i + 1)}
-                    className={`w-10 h-10 flex items-center justify-center border text-sm ${
-                      page === i + 1 ? "border-gold text-gold-bright" : "border-line text-muted"
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-              </div>
             )}
           </div>
 

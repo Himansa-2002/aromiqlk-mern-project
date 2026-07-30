@@ -1,15 +1,15 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
 
-const collectionIcons = {
-  "Men's Collection": "bottle",
-  "Women's Collection": "flower",
-  "Unisex Collection": "infinity",
-  "Arabic Perfume Oils": "droplet",
-  "Luxury Gift Sets": "gift",
-  "Decants (5ml & 10ml)": "vial",
-};
+const collections = [
+  { name: "Men's Collection", tag: "24 Fragrances", icon: "bottle" },
+  { name: "Women's Collection", tag: "31 Fragrances", icon: "flower" },
+  { name: "Unisex Collection", tag: "15 Fragrances", icon: "infinity" },
+  { name: "Arabic Perfume Oils", tag: "Alcohol-Free", icon: "droplet" },
+  { name: "Luxury Gift Sets", tag: "Ready to Gift", icon: "gift" },
+  { name: "Decants (5ml & 10ml)", tag: "Try Before Full", icon: "vial" },
+];
 
 const icons = {
   bottle: <><rect x="7" y="8" width="10" height="13" rx="2" /><path d="M10 8V5h4v3" /></>,
@@ -19,6 +19,8 @@ const icons = {
   gift: <><rect x="4" y="9" width="16" height="11" rx="1" /><path d="M4 9h16M12 9v11M8 9c-2-3 0-5 2-5s2 3 2 5M16 9c2-3 0-5-2-5s-2 3-2 5" /></>,
   vial: <><rect x="9" y="4" width="6" height="16" rx="3" /><path d="M9 12h6" /></>,
 };
+
+// Removed top-level state; will be defined inside component
 
 const whyUs = [
   ["100% Authentic", "Every bottle is sourced directly from authorised distributors — never diluted, never fake."],
@@ -37,28 +39,30 @@ const reviews = [
 
 export default function Home() {
   const [tab, setTab] = useState("new");
-  const [homeData, setHomeData] = useState({ featuredCollections: [], newArrivals: [], bestSellers: [] });
-  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("/api/home")
-      .then((r) => {
-        if (!r.ok) throw new Error("Failed to load homepage data");
-        return r.json();
+    fetch("http://localhost:5000/api/products")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch products");
+        return res.json();
       })
-      .then(setHomeData)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-
-    fetch("/api/categories")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(setCategories)
-      .catch(() => {});
+      .then((data) => {
+        const items = (data.items || data).map((p) => ({
+          ...p,
+          brand: p.brand?.name || p.brand,
+          category: p.category?.name || p.category,
+          tags: p.tags || [],
+        }));
+        setProducts(items);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
   }, []);
-
-  const visibleProducts = tab === "new" ? homeData.newArrivals : homeData.bestSellers;
 
   return (
     <>
@@ -116,63 +120,25 @@ export default function Home() {
             <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Curated by Character</h2>
             <p className="text-muted text-sm mt-3">Six ways into the house of Aromiq — from bold oud oils to gift-ready sets.</p>
           </div>
-
-          {loading && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="aspect-[4/5] border border-line bg-panel animate-pulse" />
-              ))}
-            </div>
-          )}
-
-          {!loading && error && (
-            <p className="text-red-400 text-sm text-center py-8">Couldn't load collections — is the backend running? ({error})</p>
-          )}
-
-          {!loading && !error && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-              {homeData.featuredCollections.map((c) => (
-                <Link
-                  to={`/collection/${c.slug}`}
-                  key={c._id}
-                  className="relative aspect-[4/5] border border-line bg-gradient-to-br from-panel2 to-panel hover:border-gold transition-colors flex items-end p-6"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className="absolute top-6 right-6 w-8 h-8 text-gold opacity-55">
-                    {icons[collectionIcons[c.name]] || icons.bottle}
-                  </svg>
-                  <div>
-                    <h3 className="font-display text-2xl mb-1.5">{c.name}</h3>
-                    {c.description && <span className="text-xs uppercase tracking-wider text-gold">{c.description}</span>}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            {collections.map((c) => (
+              <Link
+                to="/shop"
+                key={c.name}
+                className="relative aspect-[4/5] border border-line bg-gradient-to-br from-panel2 to-panel hover:border-gold transition-colors flex items-end p-6"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className="absolute top-6 right-6 w-8 h-8 text-gold opacity-55">
+                  {icons[c.icon]}
+                </svg>
+                <div>
+                  <h3 className="font-display text-2xl mb-1.5">{c.name}</h3>
+                  <span className="text-xs uppercase tracking-wider text-gold">{c.tag}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
-
-      {/* Shop by Category */}
-      {categories.length > 0 && (
-        <section className="py-16 border-y border-line bg-panel">
-          <div className="max-w-6xl mx-auto px-8">
-            <div className="text-center max-w-lg mx-auto mb-10">
-              <span className="text-xs uppercase tracking-[0.3em] text-gold">Browse</span>
-              <h2 className="font-display font-semibold text-2xl md:text-3xl mt-3">Shop by Category</h2>
-            </div>
-            <div className="flex flex-wrap justify-center gap-4">
-              {categories.map((cat) => (
-                <Link
-                  key={cat._id}
-                  to={`/category/${cat.slug}`}
-                  className="px-7 py-3.5 text-xs uppercase tracking-widest border border-line text-muted hover:border-gold hover:text-gold-bright transition-colors"
-                >
-                  {cat.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* New Arrivals / Best Sellers */}
       <section className="py-24">
@@ -186,32 +152,20 @@ export default function Home() {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`text-xs uppercase tracking-widest pb-2.5 border-b transition-colors ${
-                  tab === t ? "text-gold-bright border-gold" : "text-muted border-transparent"
-                }`}
+                className={`text-xs uppercase tracking-widest pb-2.5 border-b transition-colors ${tab === t ? "text-gold-bright border-gold" : "text-muted border-transparent"
+                  }`}
               >
                 {t === "new" ? "New Arrivals" : "Best Sellers"}
               </button>
             ))}
           </div>
-
-          {loading && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="aspect-[1/1.6] border border-line bg-panel animate-pulse" />
-              ))}
-            </div>
-          )}
-
-          {!loading && !error && visibleProducts.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {visibleProducts.map((p) => <ProductCard product={p} key={p._id} />)}
-            </div>
-          )}
-
-          {!loading && !error && visibleProducts.length === 0 && (
-            <p className="text-muted text-sm text-center py-8">Nothing to show here yet.</p>
-          )}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {loading ? (
+              <p className="text-center text-warm">Loading products...</p>
+            ) : (
+              products.map((p) => <ProductCard product={p} key={p._id || p.name} />)
+            )}
+          </div>
         </div>
       </section>
 
@@ -305,50 +259,22 @@ export default function Home() {
       </section>
 
       {/* Newsletter */}
-      <NewsletterSection />
+      <section className="py-20 border-t border-line bg-gradient-to-b from-transparent to-ink text-center">
+        <div className="max-w-6xl mx-auto px-8">
+          <h2 className="font-display font-semibold text-3xl md:text-4xl mb-3">Join the Inner Circle</h2>
+          <p className="text-muted mb-8">New arrivals, exclusive discounts and launch drops — straight to your inbox.</p>
+          <form
+            className="flex max-w-md mx-auto border border-line"
+            onSubmit={(e) => { e.preventDefault(); alert("Thanks for subscribing!"); }}
+          >
+            <input type="email" required placeholder="Your email address" className="flex-1 bg-transparent px-5 py-4 text-sm text-warm outline-none" />
+            <button type="submit" className="px-7 bg-gold text-ink text-xs uppercase tracking-widest">Subscribe</button>
+          </form>
+        </div>
+      </section>
     </>
   );
 }
 
-function NewsletterSection() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState(null); // null | 'sending' | 'success' | 'error'
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setStatus("sending");
-    try {
-      const res = await fetch("/api/newsletter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      if (!res.ok) throw new Error();
-      setStatus("success");
-      setEmail("");
-    } catch {
-      setStatus("error");
-    }
-  };
-
-  return (
-    <section className="py-20 border-t border-line bg-gradient-to-b from-transparent to-ink text-center">
-      <div className="max-w-6xl mx-auto px-8">
-        <h2 className="font-display font-semibold text-3xl md:text-4xl mb-3">Join the Inner Circle</h2>
-        <p className="text-muted mb-8">New arrivals, exclusive discounts and launch drops — straight to your inbox.</p>
-        <form className="flex max-w-md mx-auto border border-line" onSubmit={handleSubmit}>
-          <input
-            type="email" required placeholder="Your email address" value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 bg-transparent px-5 py-4 text-sm text-warm outline-none"
-          />
-          <button type="submit" disabled={status === "sending"} className="px-7 bg-gold text-ink text-xs uppercase tracking-widest disabled:opacity-60">
-            {status === "sending" ? "..." : "Subscribe"}
-          </button>
-        </form>
-        {status === "success" && <p className="text-gold-bright text-sm mt-4">Thanks for subscribing!</p>}
-        {status === "error" && <p className="text-red-400 text-sm mt-4">Something went wrong — try again.</p>}
-      </div>
-    </section>
-  );
-}
+/*cd aromiqlk-mern-project
+cd frontend*/

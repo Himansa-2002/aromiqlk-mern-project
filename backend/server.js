@@ -41,7 +41,7 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: process.env.CLIENT_URL || "http://localhost:5175",
     credentials: true,
   }),
 );
@@ -112,8 +112,7 @@ const startServer = async () => {
 
     app.listen(PORT, () => {
       console.log(
-        `Server running in ${
-          process.env.NODE_ENV || "development"
+        `Server running in ${process.env.NODE_ENV || "development"
         } mode on http://localhost:${PORT}`,
       );
     });

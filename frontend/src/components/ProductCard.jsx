@@ -1,15 +1,33 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const ProductCard = ({ product }) => {
-  const { name, price, oldPrice, rating = 5, badge, slug } = product;
+  const { brand, name, price, oldPrice, rating = 5, badge, _id, slug } = product;
+  const navigate = useNavigate();
 
-  // brand comes back populated as { name, slug } from the API,
-  // but may still be a plain string during local/offline testing.
-  const brandName = typeof product.brand === "object" ? product.brand?.name : product.brand;
+  const handleAddToCart = (e) => {
+    e.stopPropagation(); // prevent link navigation
+    fetch('/api/cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId: _id || name })
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to add to cart');
+        return res.json();
+      })
+      .then(() => {
+        // After adding, navigate to cart page
+        navigate('/cart');
+      })
+      .catch((err) => {
+        console.error(err);
+        // Optionally show error UI
+      });
+  };
 
   return (
     <Link
-      to={`/product/${slug}`}
+      to={`/product/${slug || name.replace(/\s+/g, '-').toLowerCase()}`}
       className="group border border-line bg-panel hover:border-gold transition-colors duration-300"
     >
       <div className="relative aspect-[1/1.15] bg-gradient-to-br from-gold/10 to-transparent flex items-center justify-center">
@@ -27,10 +45,10 @@ const ProductCard = ({ product }) => {
         </div>
       </div>
       <div className="p-4 pb-5">
-        <span className="text-[11px] uppercase tracking-wider text-gold">{brandName}</span>
+        <span className="text-[11px] uppercase tracking-wider text-gold">{brand}</span>
         <h4 className="font-display text-lg mt-1.5 mb-2.5 text-warm">{name}</h4>
         <div className="text-gold text-xs mb-2 tracking-wider">
-          {"★".repeat(Math.round(rating))}{"☆".repeat(5 - Math.round(rating))}
+          {"★".repeat(rating)}{"☆".repeat(5 - rating)}
         </div>
         <div className="flex items-center justify-between">
           <span className="font-display text-xl text-gold-bright">
@@ -39,7 +57,7 @@ const ProductCard = ({ product }) => {
           </span>
           <button
             aria-label="Add to cart"
-            onClick={(e) => e.preventDefault()}
+            onClick={handleAddToCart}
             className="w-9 h-9 rounded-full border border-gold text-gold flex items-center justify-center hover:bg-gold hover:text-ink transition-colors"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 6h2l1.6 10.2A2 2 0 0 0 9.6 18h7.8a2 2 0 0 0 2-1.6L21 8H7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /><circle cx="10" cy="21" r="1.3" fill="currentColor" /><circle cx="18" cy="21" r="1.3" fill="currentColor" /></svg>
@@ -49,5 +67,7 @@ const ProductCard = ({ product }) => {
     </Link>
   );
 };
+
+// Removed unused handleBuyNow – buying is handled on the ProductDetails page
 
 export default ProductCard;
