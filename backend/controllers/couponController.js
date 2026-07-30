@@ -6,7 +6,7 @@ import CouponUsage from "../models/CouponUsage.js";
 const normalizeCode = (code) =>
   typeof code === "string" ? code.trim().toUpperCase() : "";
 
-const calculateDiscount = (coupon, subtotal) => {
+export const calculateCouponDiscount = (coupon, subtotal) => {
   let discountAmount = 0;
 
   if (coupon.discountType === "percentage") {
@@ -27,7 +27,7 @@ const calculateDiscount = (coupon, subtotal) => {
   return Number(discountAmount.toFixed(2));
 };
 
-const validateCouponRules = async (coupon, userId, subtotal) => {
+export const validateCouponForUser = async ({ coupon, userId, subtotal }) => {
   const now = new Date();
 
   if (!coupon.isActive) {
