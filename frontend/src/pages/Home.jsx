@@ -38,6 +38,7 @@ const reviews = [
 export default function Home() {
   const [tab, setTab] = useState("new");
   const [homeData, setHomeData] = useState({ featuredCollections: [], newArrivals: [], bestSellers: [] });
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -50,6 +51,11 @@ export default function Home() {
       .then(setHomeData)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setCategories)
+      .catch(() => {});
   }, []);
 
   const visibleProducts = tab === "new" ? homeData.newArrivals : homeData.bestSellers;
@@ -127,7 +133,7 @@ export default function Home() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               {homeData.featuredCollections.map((c) => (
                 <Link
-                  to="/shop"
+                  to={`/collection/${c.slug}`}
                   key={c._id}
                   className="relative aspect-[4/5] border border-line bg-gradient-to-br from-panel2 to-panel hover:border-gold transition-colors flex items-end p-6"
                 >
@@ -144,6 +150,29 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* Shop by Category */}
+      {categories.length > 0 && (
+        <section className="py-16 border-y border-line bg-panel">
+          <div className="max-w-6xl mx-auto px-8">
+            <div className="text-center max-w-lg mx-auto mb-10">
+              <span className="text-xs uppercase tracking-[0.3em] text-gold">Browse</span>
+              <h2 className="font-display font-semibold text-2xl md:text-3xl mt-3">Shop by Category</h2>
+            </div>
+            <div className="flex flex-wrap justify-center gap-4">
+              {categories.map((cat) => (
+                <Link
+                  key={cat._id}
+                  to={`/category/${cat.slug}`}
+                  className="px-7 py-3.5 text-xs uppercase tracking-widest border border-line text-muted hover:border-gold hover:text-gold-bright transition-colors"
+                >
+                  {cat.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* New Arrivals / Best Sellers */}
       <section className="py-24">

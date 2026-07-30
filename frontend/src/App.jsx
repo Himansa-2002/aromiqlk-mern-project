@@ -6,6 +6,9 @@ import Shop from "./pages/Shop.jsx";
 import About from "./pages/About.jsx";
 import Contact from "./pages/Contact.jsx";
 import ProductDetails from "./pages/ProductDetails.jsx";
+import CategoryPage from "./pages/CategoryPage.jsx";
+import BrandPage from "./pages/BrandPage.jsx";
+import CollectionPage from "./pages/CollectionPage.jsx";
 
 export default function App() {
   return (
@@ -16,7 +19,10 @@ export default function App() {
         <Route path="/shop" element={<Shop />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
-       <Route path="/product/:slug" element={<ProductDetails />} />
+        <Route path="/product/:slug" element={<ProductDetails />} />
+        <Route path="/category/:slug" element={<CategoryPage />} />
+        <Route path="/brand/:slug" element={<BrandPage />} />
+        <Route path="/collection/:slug" element={<CollectionPage />} />
       </Routes>
       <Footer />
     </div>
