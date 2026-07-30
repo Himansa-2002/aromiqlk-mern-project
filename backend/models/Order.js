@@ -384,6 +384,23 @@ const orderSchema = new mongoose.Schema(
       trim: true,
     },
 
+    trackingCourier: {
+  type: String,
+  default: '',
+  trim: true,
+},
+
+trackingUrl: {
+  type: String,
+  default: '',
+  trim: true,
+},
+
+estimatedDeliveryDate: {
+  type: Date,
+  default: null,
+},
+
     placedAt: {
       type: Date,
       default: Date.now,

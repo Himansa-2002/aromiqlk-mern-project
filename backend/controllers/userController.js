@@ -311,6 +311,11 @@ export const setDefaultAddress = async (
       throw new Error('User not found');
     }
 
+    if (!user.isActive) {
+  res.status(403);
+  throw new Error("Your account has been deactivated");
+}
+
     const address = user.addresses.id(addressId);
 
     if (!address) {

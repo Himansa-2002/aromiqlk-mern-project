@@ -27,6 +27,10 @@ import checkoutRoutes from "./routes/checkoutRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import inventoryRoutes from "./routes/inventoryRoutes.js";
+import adminOrderRoutes from "./routes/adminOrderRoutes.js";
+import adminCustomerRoutes from "./routes/adminCustomerRoutes.js";
+import adminPaymentRoutes from "./routes/adminPaymentRoutes.js";
+import adminDashboardRoutes from "./routes/adminDashboardRoutes.js";
 
 // Error middleware
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
@@ -78,6 +82,10 @@ app.use("/api/admin/shipping-rules", adminShippingRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/admin/inventory", inventoryRoutes);
+app.use("/api/admin/orders", adminOrderRoutes);
+app.use("/api/admin/customers", adminCustomerRoutes);
+app.use("/api/admin/payments", adminPaymentRoutes);
+app.use("/api/admin/dashboard", adminDashboardRoutes);
 
 // Health-check route
 app.get("/api/health", (req, res) => {
