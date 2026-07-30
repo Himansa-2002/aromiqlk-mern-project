@@ -1,4 +1,5 @@
 import Category from '../models/Category.js';
+import Product from '../models/Product.js';
 
 // GET /api/categories
 export const getCategories = async (req, res) => {
@@ -10,12 +11,14 @@ export const getCategories = async (req, res) => {
   }
 };
 
-// GET /api/categories/:slug
+// GET /api/categories/:slug — category info + its products
 export const getCategoryBySlug = async (req, res) => {
   try {
     const category = await Category.findOne({ slug: req.params.slug });
     if (!category) return res.status(404).json({ error: 'Category not found' });
-    res.json(category);
+
+    const products = await Product.find({ category: category._id }).populate('brand', 'name slug');
+    res.json({ category, products });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
