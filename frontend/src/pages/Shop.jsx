@@ -1,21 +1,12 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
-
-const allProducts = [
-  { brand: "Lattafa", name: "Khamrah Qahwa", gender: "Men's", category: "Perfume", price: 8900, rating: 5, badge: "New", tags: ["new"] },
-  { brand: "Armaf", name: "Club de Nuit Intense", gender: "Men's", category: "Perfume", price: 7200, oldPrice: 9500, rating: 5, badge: "Sale", tags: ["popular"] },
-  { brand: "Afnan", name: "Supremacy Silver", gender: "Men's", category: "Perfume", price: 6500, rating: 4, badge: null, tags: [] },
-  { brand: "Al Haramain", name: "Amber Oud Gold", gender: "Unisex", category: "Perfume", price: 11400, rating: 5, badge: "Best Seller", tags: ["bestseller"] },
-  { brand: "Rasasi", name: "Hawas for Her", gender: "Women's", category: "Perfume", price: 6900, rating: 4, badge: null, tags: ["popular"] },
-  { brand: "Lattafa", name: "Yara Moi", gender: "Women's", category: "Perfume", price: 7500, oldPrice: 8200, rating: 5, badge: "Sale", tags: [] },
-  { brand: "Afnan", name: "9pm Oil", gender: "Men's", category: "Oils", price: 4200, rating: 5, badge: null, tags: ["bestseller"] },
-  { brand: "Al Haramain", name: "Amber Oud Decant 5ml", gender: "Unisex", category: "Decants", price: 1800, rating: 4, badge: "New", tags: ["new"] },
-];
 
 const brandOptions = ["Lattafa", "Armaf", "Afnan", "Al Haramain", "Rasasi"];
 
 export default function Shop() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
   const [genders, setGenders] = useState([]);
@@ -25,16 +16,45 @@ export default function Shop() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("default");
 
+  // Fetch product data from backend API on component mount
+  useEffect(() => {
+    fetch("http://localhost:5000/api/products")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch products");
+        return res.json();
+      })
+      .then((data) => {
+        const items = (data.items || data).map((p) => ({
+          ...p,
+          brand: p.brand?.name || p.brand,
+          category: p.category?.name || p.category,
+          tags: p.tags || [],
+        }));
+        setProducts(items);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
   const toggle = (list, setList, value) =>
     setList(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
 
   const clearFilters = () => {
-    setBrands([]); setCategories([]); setGenders([]); setTags([]);
-    setPriceMin(""); setPriceMax(""); setSearch(""); setSort("default");
+    setBrands([]);
+    setCategories([]);
+    setGenders([]);
+    setTags([]);
+    setPriceMin("");
+    setPriceMax("");
+    setSearch("");
+    setSort("default");
   };
 
   const filtered = useMemo(() => {
-    let list = allProducts.filter((p) => {
+    let list = products.filter((p) => {
       if (brands.length && !brands.includes(p.brand)) return false;
       if (categories.length && !categories.includes(p.category)) return false;
       if (genders.length && !genders.includes(p.gender)) return false;
@@ -49,13 +69,21 @@ export default function Shop() {
     if (sort === "new") list = [...list].sort((a, b) => b.tags.includes("new") - a.tags.includes("new"));
     if (sort === "bestseller") list = [...list].sort((a, b) => b.tags.includes("bestseller") - a.tags.includes("bestseller"));
     return list;
-  }, [brands, categories, genders, tags, priceMin, priceMax, search, sort]);
+  }, [products, brands, categories, genders, tags, priceMin, priceMax, search, sort]);
 
   const checkboxRow = (checked, onChange, label) => (
     <label className="flex items-center gap-2.5 text-sm text-muted py-1.5 cursor-pointer hover:text-warm">
       <input type="checkbox" checked={checked} onChange={onChange} className="w-3.5 h-3.5 accent-gold" /> {label}
     </label>
   );
+
+  if (loading) {
+    return (
+      <section className="py-16">
+        <div className="max-w-6xl mx-auto px-8 text-center text-warm">Loading products...</div>
+      </section>
+    );
+  }
 
   return (
     <>

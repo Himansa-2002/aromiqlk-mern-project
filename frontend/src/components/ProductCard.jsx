@@ -1,11 +1,33 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const ProductCard = ({ product }) => {
-  const { brand, name, price, oldPrice, rating = 5, badge } = product;
+  const { brand, name, price, oldPrice, rating = 5, badge, _id, slug } = product;
+  const navigate = useNavigate();
+
+  const handleAddToCart = (e) => {
+    e.stopPropagation(); // prevent link navigation
+    fetch('/api/cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId: _id || name })
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to add to cart');
+        return res.json();
+      })
+      .then(() => {
+        // After adding, navigate to cart page
+        navigate('/cart');
+      })
+      .catch((err) => {
+        console.error(err);
+        // Optionally show error UI
+      });
+  };
 
   return (
     <Link
-      to="/product/1"
+      to={`/product/${slug || name.replace(/\s+/g, '-').toLowerCase()}`}
       className="group border border-line bg-panel hover:border-gold transition-colors duration-300"
     >
       <div className="relative aspect-[1/1.15] bg-gradient-to-br from-gold/10 to-transparent flex items-center justify-center">
@@ -35,7 +57,7 @@ const ProductCard = ({ product }) => {
           </span>
           <button
             aria-label="Add to cart"
-            onClick={(e) => e.preventDefault()}
+            onClick={handleAddToCart}
             className="w-9 h-9 rounded-full border border-gold text-gold flex items-center justify-center hover:bg-gold hover:text-ink transition-colors"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 6h2l1.6 10.2A2 2 0 0 0 9.6 18h7.8a2 2 0 0 0 2-1.6L21 8H7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /><circle cx="10" cy="21" r="1.3" fill="currentColor" /><circle cx="18" cy="21" r="1.3" fill="currentColor" /></svg>
@@ -45,5 +67,7 @@ const ProductCard = ({ product }) => {
     </Link>
   );
 };
+
+// Removed unused handleBuyNow – buying is handled on the ProductDetails page
 
 export default ProductCard;

@@ -1,34 +1,116 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
 
-const product = {
-  brand: "Lattafa",
-  name: "Khamrah Qahwa",
-  price: 8900,
-  rating: 5,
-  reviews: 42,
-  desc: "A warm, coffee-laced oriental fragrance layered with cinnamon, cardamom and rich amber — Khamrah Qahwa opens with spiced espresso and settles into a deep, long-lasting base of oud and vanilla.",
-  top: "Cardamom, Cinnamon, Coffee",
-  middle: "Praline, Amber, Saffron",
-  base: "Oud, Vanilla, Musk",
-  sizes: [
-    { label: "5ml Decant", price: 1800 },
-    { label: "10ml Decant", price: 3200 },
-    { label: "Full Bottle 100ml", price: 8900 },
-  ],
-};
-
-const related = [
-  { brand: "Armaf", name: "Club de Nuit Intense", price: 7200 },
-  { brand: "Afnan", name: "Supremacy Silver", price: 6500 },
-  { brand: "Al Haramain", name: "Amber Oud Gold", price: 11400 },
-  { brand: "Lattafa", name: "Yara Moi", price: 7500 },
-];
-
 export default function ProductDetails() {
+  const { slug } = useParams();
+  const [product, setProduct] = useState(null);
+  const [related, setRelated] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeSize, setActiveSize] = useState(0);
   const [qty, setQty] = useState(1);
+  const navigate = useNavigate();
+
+  // Fetch product by slug
+  useEffect(() => {
+    if (!slug) return;
+    fetch(`http://localhost:5000/api/products/${slug}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch product');
+        return res.json();
+      })
+      .then((data) => {
+        const p = {
+          ...data,
+          brand: data.brand?.name || data.brand,
+          category: data.category?.name || data.category,
+          tags: data.tags || [],
+        };
+        setProduct(p);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, [slug]);
+
+  // Fetch related products after product is loaded
+  useEffect(() => {
+    if (product && product._id) {
+      fetch(`http://localhost:5000/api/products/${product._id}/related`)
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to fetch related');
+          return res.json();
+        })
+        .then((data) => {
+          const items = data.map((p) => ({
+            ...p,
+            brand: p.brand?.name || p.brand,
+            category: p.category?.name || p.category,
+            tags: p.tags || [],
+          }));
+          setRelated(items);
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [product]);
+
+  const handleAddToCart = (e) => {
+    e.stopPropagation();
+    if (!product) return;
+    fetch('/api/cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId: product._id || product.name,
+        size: product.sizes[activeSize].label,
+        quantity: qty,
+      }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to add to cart');
+        return res.json();
+      })
+      .then(() => navigate('/cart'))
+      .catch((err) => console.error(err));
+  };
+
+  const handleBuyNow = (e) => {
+    e.stopPropagation();
+    if (!product) return;
+    fetch('/api/cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId: product._id || product.name,
+        size: product.sizes[activeSize].label,
+        quantity: qty,
+      }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to add to cart');
+        return res.json();
+      })
+      .then(() => navigate('/checkout'))
+      .catch((err) => console.error(err));
+  };
+
+  if (loading) {
+    return (
+      <section className="pt-8">
+        <div className="max-w-6xl mx-auto px-8 text-xs text-muted">Loading product...</div>
+      </section>
+    );
+  }
+
+  if (!product) {
+    return (
+      <section className="pt-8">
+        <div className="max-w-6xl mx-auto px-8 text-xs text-muted">Product not found.</div>
+      </section>
+    );
+  }
 
   return (
     <>
@@ -40,15 +122,14 @@ export default function ProductDetails() {
 
       <section className="py-10">
         <div className="max-w-6xl mx-auto px-8 grid md:grid-cols-2 gap-14">
-
           <div>
             <div className="aspect-[4/5] border border-line bg-gradient-to-br from-gold/15 to-panel flex items-center justify-center mb-3.5">
-              <svg viewBox="0 0 120 160" fill="none" className="w-[34%]"><rect x="34" y="42" width="52" height="98" rx="10" stroke="#c9a961" strokeWidth="1.2" /><path d="M46 18h28l10 13-10 10H46l-10-10 10-13Z" stroke="#c9a961" strokeWidth="1.2" /></svg>
+              {/* Image placeholder */}
             </div>
             <div className="flex gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className={`w-[70px] h-[84px] border bg-panel flex items-center justify-center cursor-pointer ${i === 0 ? "border-gold" : "border-line"}`}>
-                  <svg viewBox="0 0 120 160" fill="none" className="w-[55%] opacity-80"><rect x="34" y="42" width="52" height="98" rx="10" stroke="#c9a961" strokeWidth="1.2" /></svg>
+                  {/* Icon placeholder */}
                 </div>
               ))}
             </div>
@@ -58,7 +139,7 @@ export default function ProductDetails() {
             <span className="text-xs uppercase tracking-wider text-gold">{product.brand}</span>
             <h1 className="font-display text-3xl md:text-4xl mt-2.5 mb-3">{product.name}</h1>
             <div className="text-gold text-sm mb-4">
-              {"★".repeat(product.rating)} <span className="text-muted text-xs">({product.reviews} reviews)</span>
+              {"★".repeat(product.rating)} <span className="text-muted text-xs">({product.reviewCount} reviews)</span>
             </div>
             <p className="text-muted text-sm leading-relaxed mb-6">{product.desc}</p>
 
@@ -83,9 +164,7 @@ export default function ProductDetails() {
                 <button
                   key={s.label}
                   onClick={() => setActiveSize(i)}
-                  className={`px-4 py-2.5 text-sm border transition-colors ${
-                    i === activeSize ? "border-gold text-gold-bright" : "border-line text-muted"
-                  }`}
+                  className={`px-4 py-2.5 text-sm border transition-colors ${i === activeSize ? "border-gold text-gold-bright" : "border-line text-muted"}`}
                 >
                   {s.label}
                 </button>
@@ -106,8 +185,8 @@ export default function ProductDetails() {
             </div>
 
             <div className="flex gap-3.5 flex-wrap mb-7">
-              <button className="px-8 py-4 text-xs uppercase tracking-widest bg-gradient-to-br from-gold-bright to-gold-deep text-ink font-medium hover:brightness-110 transition">Add to Cart</button>
-              <button className="px-8 py-4 text-xs uppercase tracking-widest border border-gold text-gold-bright hover:bg-gold/10 transition">Buy Now</button>
+              <button onClick={handleAddToCart} className="px-8 py-4 text-xs uppercase tracking-widest bg-gradient-to-br from-gold-bright to-gold-deep text-ink font-medium hover:brightness-110 transition">Add to Cart</button>
+              <button onClick={handleBuyNow} className="px-8 py-4 text-xs uppercase tracking-widest border border-gold text-gold-bright hover:bg-gold/10 transition">Buy Now</button>
               <a href="https://wa.me/94788778808" target="_blank" rel="noreferrer" className="px-8 py-4 text-xs uppercase tracking-widest border border-warm/35 text-warm hover:border-warm transition">WhatsApp Inquiry</a>
             </div>
 
@@ -117,7 +196,6 @@ export default function ProductDetails() {
               <div className="flex justify-between py-2 border-b border-line"><span>Delivery</span><span>2–5 working days, islandwide</span></div>
             </div>
           </div>
-
         </div>
       </section>
 
@@ -128,7 +206,7 @@ export default function ProductDetails() {
             <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Related Products</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {related.map((r) => <ProductCard product={r} key={r.name} />)}
+            {related.map((r) => <ProductCard product={r} key={r._id || r.name} />)}
           </div>
         </div>
       </section>

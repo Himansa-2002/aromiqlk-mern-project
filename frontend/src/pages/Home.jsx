@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
 
@@ -20,12 +20,7 @@ const icons = {
   vial: <><rect x="9" y="4" width="6" height="16" rx="3" /><path d="M9 12h6" /></>,
 };
 
-const products = [
-  { brand: "Lattafa", name: "Khamrah Qahwa", price: 8900, rating: 5, badge: "New" },
-  { brand: "Armaf", name: "Club de Nuit Intense", price: 7200, oldPrice: 9500, rating: 5, badge: "Sale" },
-  { brand: "Afnan", name: "Supremacy Silver", price: 6500, rating: 4, badge: null },
-  { brand: "Al Haramain", name: "Amber Oud Gold", price: 11400, rating: 5, badge: "Best Seller" },
-];
+// Removed top-level state; will be defined inside component
 
 const whyUs = [
   ["100% Authentic", "Every bottle is sourced directly from authorised distributors — never diluted, never fake."],
@@ -44,6 +39,30 @@ const reviews = [
 
 export default function Home() {
   const [tab, setTab] = useState("new");
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/products")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch products");
+        return res.json();
+      })
+      .then((data) => {
+        const items = (data.items || data).map((p) => ({
+          ...p,
+          brand: p.brand?.name || p.brand,
+          category: p.category?.name || p.category,
+          tags: p.tags || [],
+        }));
+        setProducts(items);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <>
@@ -133,16 +152,19 @@ export default function Home() {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`text-xs uppercase tracking-widest pb-2.5 border-b transition-colors ${
-                  tab === t ? "text-gold-bright border-gold" : "text-muted border-transparent"
-                }`}
+                className={`text-xs uppercase tracking-widest pb-2.5 border-b transition-colors ${tab === t ? "text-gold-bright border-gold" : "text-muted border-transparent"
+                  }`}
               >
                 {t === "new" ? "New Arrivals" : "Best Sellers"}
               </button>
             ))}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {products.map((p) => <ProductCard product={p} key={p.name} />)}
+            {loading ? (
+              <p className="text-center text-warm">Loading products...</p>
+            ) : (
+              products.map((p) => <ProductCard product={p} key={p._id || p.name} />)
+            )}
           </div>
         </div>
       </section>
