@@ -7,6 +7,7 @@ export default function ProductDetails() {
 
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -27,10 +28,14 @@ export default function ProductDetails() {
       })
       .then((data) => {
         setProduct(data);
-        return fetch(`/api/products/${data._id}/related`);
+        fetch(`/api/products/${data._id}/related`)
+          .then((r) => (r && r.ok ? r.json() : []))
+          .then((relatedData) => setRelated(relatedData || []))
+          .catch(() => {});
+        return fetch(`/api/products/${data._id}/reviews`);
       })
       .then((r) => (r && r.ok ? r.json() : []))
-      .then((relatedData) => setRelated(relatedData || []))
+      .then((reviewData) => setReviews(reviewData || []))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [slug]);
@@ -153,6 +158,8 @@ export default function ProductDetails() {
         </div>
       </section>
 
+      <ReviewsSection product={product} reviews={reviews} />
+
       {related.length > 0 && (
         <section className="py-20">
           <div className="max-w-6xl mx-auto px-8">
@@ -167,5 +174,116 @@ export default function ProductDetails() {
         </section>
       )}
     </>
+  );
+}
+
+function ReviewsSection({ product, reviews }) {
+  const [name, setName] = useState("");
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [status, setStatus] = useState(null); // null | 'sending' | 'success' | 'error'
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus("sending");
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product: product._id, name, rating, comment }),
+      });
+      if (!res.ok) throw new Error();
+      setStatus("success");
+      setName("");
+      setRating(5);
+      setComment("");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <section className="py-20 border-t border-line">
+      <div className="max-w-6xl mx-auto px-8 grid md:grid-cols-[280px_1fr] gap-14">
+
+        {/* Rating summary */}
+        <div>
+          <h2 className="font-display text-2xl mb-5">Customer Reviews</h2>
+          <div className="flex items-end gap-3 mb-2">
+            <span className="font-display text-5xl text-gold-bright">{(product.rating || 0).toFixed(1)}</span>
+            <span className="text-muted text-sm mb-2">/ 5</span>
+          </div>
+          <div className="text-gold text-sm mb-2">{"★".repeat(Math.round(product.rating || 0))}{"☆".repeat(5 - Math.round(product.rating || 0))}</div>
+          <p className="text-muted text-xs">Based on {product.reviewCount || 0} review{product.reviewCount === 1 ? "" : "s"}</p>
+        </div>
+
+        {/* Review list + submit form */}
+        <div>
+          {reviews.length > 0 ? (
+            <div className="space-y-6 mb-12">
+              {reviews.map((r) => (
+                <div key={r._id} className="border-b border-line pb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <strong className="text-sm font-medium">{r.name}</strong>
+                    <div className="text-gold text-xs">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</div>
+                  </div>
+                  <p className="text-muted text-sm leading-relaxed">{r.comment}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted text-sm mb-12">No reviews yet — be the first to share your thoughts.</p>
+          )}
+
+          <div className="border border-line bg-panel p-8">
+            <h3 className="font-display text-xl mb-5">Write a Review</h3>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid grid-cols-2 gap-5">
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs uppercase tracking-wider text-gold">Your Name</label>
+                  <input
+                    value={name} onChange={(e) => setName(e.target.value)} required
+                    placeholder="Your name"
+                    className="bg-ink border border-line px-3.5 py-3 text-sm text-warm outline-none focus:border-gold"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs uppercase tracking-wider text-gold">Rating</label>
+                  <select
+                    value={rating} onChange={(e) => setRating(Number(e.target.value))}
+                    className="bg-ink border border-line px-3.5 py-3 text-sm text-warm outline-none focus:border-gold"
+                  >
+                    {[5, 4, 3, 2, 1].map((n) => (
+                      <option key={n} value={n}>{n} Star{n === 1 ? "" : "s"}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs uppercase tracking-wider text-gold">Your Review</label>
+                <textarea
+                  value={comment} onChange={(e) => setComment(e.target.value)} required rows={4}
+                  placeholder="Share your experience with this fragrance..."
+                  className="bg-ink border border-line px-3.5 py-3 text-sm text-warm outline-none focus:border-gold resize-y"
+                />
+              </div>
+              <button
+                type="submit" disabled={status === "sending"}
+                className="px-8 py-4 text-xs uppercase tracking-widest bg-gradient-to-br from-gold-bright to-gold-deep text-ink font-medium hover:brightness-110 transition disabled:opacity-60"
+              >
+                {status === "sending" ? "Submitting..." : "Submit Review"}
+              </button>
+              {status === "success" && (
+                <p className="text-gold-bright text-sm">Thanks for your review! It'll appear here once approved.</p>
+              )}
+              {status === "error" && (
+                <p className="text-red-400 text-sm">Something went wrong — please try again.</p>
+              )}
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </section>
   );
 }
