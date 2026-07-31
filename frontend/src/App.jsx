@@ -10,7 +10,18 @@ import CategoryPage from "./pages/CategoryPage.jsx";
 import BrandPage from "./pages/BrandPage.jsx";
 import CollectionPage from "./pages/CollectionPage.jsx";
 
-export default function App() {
+import AdminLayout from "./admin/AdminLayout.jsx";
+import AdminDashboard from "./admin/pages/AdminDashboard.jsx";
+import AdminProducts from "./admin/pages/AdminProducts.jsx";
+import AdminCategories from "./admin/pages/AdminCategories.jsx";
+import AdminBrands from "./admin/pages/AdminBrands.jsx";
+import AdminCollections from "./admin/pages/AdminCollections.jsx";
+import AdminBanners from "./admin/pages/AdminBanners.jsx";
+import AdminReviews from "./admin/pages/AdminReviews.jsx";
+import AdminMessages from "./admin/pages/AdminMessages.jsx";
+import AdminNewsletter from "./admin/pages/AdminNewsletter.jsx";
+
+function SiteLayout() {
   return (
     <div className="bg-ink text-warm font-body">
       <Header />
@@ -26,5 +37,30 @@ export default function App() {
       </Routes>
       <Footer />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      {/* Admin panel — no site header/footer, its own layout with sidebar nav.
+          NOTE: not auth-protected yet — that depends on the shared auth
+          middleware/admin-layout piece, coordinate with the teammate handling
+          Module 1 (Authentication) before this goes anywhere near production. */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminDashboard />} />
+        <Route path="products" element={<AdminProducts />} />
+        <Route path="categories" element={<AdminCategories />} />
+        <Route path="brands" element={<AdminBrands />} />
+        <Route path="collections" element={<AdminCollections />} />
+        <Route path="banners" element={<AdminBanners />} />
+        <Route path="reviews" element={<AdminReviews />} />
+        <Route path="messages" element={<AdminMessages />} />
+        <Route path="newsletter" element={<AdminNewsletter />} />
+      </Route>
+
+      {/* Everything else is the public site, wrapped in Header/Footer */}
+      <Route path="/*" element={<SiteLayout />} />
+    </Routes>
   );
 }
