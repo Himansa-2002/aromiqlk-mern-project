@@ -4,13 +4,10 @@ import ProductCard from "../components/ProductCard.jsx";
 
 export default function ProductDetails() {
   const { slug } = useParams();
-
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
   const [activeSize, setActiveSize] = useState(0);
   const [qty, setQty] = useState(1);
   const navigate = useNavigate();
@@ -116,55 +113,6 @@ export default function ProductDetails() {
     );
   }
 
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    setProduct(null);
-    setActiveSize(0);
-    setQty(1);
-
-    fetch(`/api/products/${slug}`)
-      .then((r) => {
-        if (!r.ok) throw new Error("Product not found");
-        return r.json();
-      })
-      .then((data) => {
-        setProduct(data);
-        fetch(`/api/products/${data._id}/related`)
-          .then((r) => (r && r.ok ? r.json() : []))
-          .then((relatedData) => setRelated(relatedData || []))
-          .catch(() => { });
-        return fetch(`/api/products/${data._id}/reviews`);
-      })
-      .then((r) => (r && r.ok ? r.json() : []))
-      .then((reviewData) => setReviews(reviewData || []))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [slug]);
-
-  if (loading) {
-    return (
-      <section className="py-24">
-        <div className="max-w-6xl mx-auto px-8 text-center text-muted text-sm">Loading...</div>
-      </section>
-    );
-  }
-
-  if (error || !product) {
-    return (
-      <section className="py-24">
-        <div className="max-w-6xl mx-auto px-8 text-center">
-          <p className="text-red-400 text-sm mb-4">{error || "Product not found."}</p>
-          <Link to="/shop" className="text-gold text-sm">← Back to Shop</Link>
-        </div>
-      </section>
-    );
-  }
-
-  const brandName = typeof product.brand === "object" ? product.brand?.name : product.brand;
-  const sizes = product.sizes?.length ? product.sizes : [{ label: "Full Bottle", price: product.price }];
-  const displayPrice = sizes[activeSize]?.price ?? product.price;
-
   return (
     <>
       <section className="pt-8">
@@ -189,33 +137,31 @@ export default function ProductDetails() {
           </div>
 
           <div>
-            <span className="text-xs uppercase tracking-wider text-gold">{brandName}</span>
+            <span className="text-xs uppercase tracking-wider text-gold">{product.brand}</span>
             <h1 className="font-display text-3xl md:text-4xl mt-2.5 mb-3">{product.name}</h1>
             <div className="text-gold text-sm mb-4">
-              {"★".repeat(Math.round(product.rating || 0))} <span className="text-muted text-xs">({product.reviewCount || 0} reviews)</span>
+              {"★".repeat(product.rating)} <span className="text-muted text-xs">({product.reviewCount} reviews)</span>
             </div>
-            <p className="text-muted text-sm leading-relaxed mb-6">{product.description}</p>
+            <p className="text-muted text-sm leading-relaxed mb-6">{product.desc}</p>
 
-            {product.notes && (
-              <div className="flex gap-8 flex-wrap mb-7">
-                <div>
-                  <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Top Notes</h5>
-                  <p className="text-xs text-muted max-w-[160px]">{product.notes.top}</p>
-                </div>
-                <div>
-                  <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Middle Notes</h5>
-                  <p className="text-xs text-muted max-w-[160px]">{product.notes.middle}</p>
-                </div>
-                <div>
-                  <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Base Notes</h5>
-                  <p className="text-xs text-muted max-w-[160px]">{product.notes.base}</p>
-                </div>
+            <div className="flex gap-8 flex-wrap mb-7">
+              <div>
+                <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Top Notes</h5>
+                <p className="text-xs text-muted max-w-[160px]">{product.top}</p>
               </div>
-            )}
+              <div>
+                <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Middle Notes</h5>
+                <p className="text-xs text-muted max-w-[160px]">{product.middle}</p>
+              </div>
+              <div>
+                <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Base Notes</h5>
+                <p className="text-xs text-muted max-w-[160px]">{product.base}</p>
+              </div>
+            </div>
 
             <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2.5">Select Size</h5>
             <div className="flex gap-3 mb-7 flex-wrap">
-              {sizes.map((s, i) => (
+              {product.sizes.map((s, i) => (
                 <button
                   key={s.label}
                   onClick={() => setActiveSize(i)}
@@ -227,7 +173,7 @@ export default function ProductDetails() {
             </div>
 
             <div className="font-display text-2xl text-gold-bright mb-7">
-              Rs {displayPrice.toLocaleString()}
+              Rs {product.sizes[activeSize].price.toLocaleString()}
             </div>
 
             <div className="flex items-center gap-5 mb-7">
@@ -236,9 +182,7 @@ export default function ProductDetails() {
                 <span className="w-10 text-center text-sm">{qty}</span>
                 <button onClick={() => setQty((q) => q + 1)} className="w-9 h-10 text-gold text-lg">+</button>
               </div>
-              <span className="text-green-400 text-sm">
-                {(product.stock ?? 1) > 0 ? "● In Stock" : "● Out of Stock"}
-              </span>
+              <span className="text-green-400 text-sm">● In Stock</span>
             </div>
 
             <div className="flex gap-3.5 flex-wrap mb-7">
@@ -248,29 +192,25 @@ export default function ProductDetails() {
             </div>
 
             <div className="text-sm text-muted">
-              <div className="flex justify-between py-2 border-b border-line"><span>Brand</span><span>{brandName}</span></div>
-              <div className="flex justify-between py-2 border-b border-line"><span>Availability</span><span>{(product.stock ?? 1) > 0 ? "In Stock" : "Out of Stock"}</span></div>
+              <div className="flex justify-between py-2 border-b border-line"><span>Brand</span><span>{product.brand}</span></div>
+              <div className="flex justify-between py-2 border-b border-line"><span>Availability</span><span>In Stock</span></div>
               <div className="flex justify-between py-2 border-b border-line"><span>Delivery</span><span>2–5 working days, islandwide</span></div>
             </div>
           </div>
         </div>
       </section>
 
-      <ReviewsSection product={product} reviews={reviews} />
-
-      {related.length > 0 && (
-        <section className="py-20">
-          <div className="max-w-6xl mx-auto px-8">
-            <div className="text-center max-w-lg mx-auto mb-12">
-              <span className="text-xs uppercase tracking-[0.3em] text-gold">You May Also Like</span>
-              <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Related Products</h2>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {related.map((r) => <ProductCard product={r} key={r._id} />)}
-            </div>
+      <section className="py-20">
+        <div className="max-w-6xl mx-auto px-8">
+          <div className="text-center max-w-lg mx-auto mb-12">
+            <span className="text-xs uppercase tracking-[0.3em] text-gold">You May Also Like</span>
+            <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Related Products</h2>
           </div>
-        </section>
-      )}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {related.map((r) => <ProductCard product={r} key={r._id || r.name} />)}
+          </div>
+        </div>
+      </section>
     </>
   );
 }

@@ -27,6 +27,7 @@ import CategoryPage from "./pages/CategoryPage.jsx";
 import BrandPage from "./pages/BrandPage.jsx";
 import CollectionPage from "./pages/CollectionPage.jsx";
 
+
 import AdminLayout from "./admin/AdminLayout.jsx";
 import AdminDashboard from "./admin/pages/AdminDashboard.jsx";
 import AdminProducts from "./admin/pages/AdminProducts.jsx";
@@ -66,9 +67,11 @@ function SiteLayout() {
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin-orders" element={<AdminOrders />} />
         <Route path="*" element={<NotFoundPage />} />
+
         <Route path="/category/:slug" element={<CategoryPage />} />
         <Route path="/brand/:slug" element={<BrandPage />} />
         <Route path="/collection/:slug" element={<CollectionPage />} />
+
       </Routes>
       <Footer />
     </div>

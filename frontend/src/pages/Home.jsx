@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { useState, useEffect } from "react";
-=======
-import { useEffect, useState } from "react";
->>>>>>> 24139a465c35ce33bc363a8ff01e5d6c9b9a4941
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
 
@@ -24,11 +20,10 @@ const icons = {
   vial: <><rect x="9" y="4" width="6" height="16" rx="3" /><path d="M9 12h6" /></>,
 };
 
-<<<<<<< HEAD
+
 // Removed top-level state; will be defined inside component
 
-=======
->>>>>>> 24139a465c35ce33bc363a8ff01e5d6c9b9a4941
+
 const whyUs = [
   ["100% Authentic", "Every bottle is sourced directly from authorised distributors — never diluted, never fake."],
   ["Premium Imported Fragrances", "Curated from renowned Arabic perfume houses across the Gulf."],
@@ -46,32 +41,6 @@ const reviews = [
 
 export default function Home() {
   const [tab, setTab] = useState("new");
-<<<<<<< HEAD
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("http://localhost:5000/api/products")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch products");
-        return res.json();
-      })
-      .then((data) => {
-        const items = (data.items || data).map((p) => ({
-          ...p,
-          brand: p.brand?.name || p.brand,
-          category: p.category?.name || p.category,
-          tags: p.tags || [],
-        }));
-        setProducts(items);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
-  }, []);
-=======
   const [homeData, setHomeData] = useState({ featuredCollections: [], newArrivals: [], bestSellers: [] });
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -91,16 +60,15 @@ export default function Home() {
     fetch("/api/categories")
       .then((r) => (r.ok ? r.json() : []))
       .then(setCategories)
-      .catch(() => {});
+      .catch(() => { });
 
     fetch("/api/brands")
       .then((r) => (r.ok ? r.json() : []))
       .then(setBrands)
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const visibleProducts = tab === "new" ? homeData.newArrivals : homeData.bestSellers;
->>>>>>> 24139a465c35ce33bc363a8ff01e5d6c9b9a4941
 
   return (
     <>
@@ -268,15 +236,6 @@ export default function Home() {
               </button>
             ))}
           </div>
-<<<<<<< HEAD
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {loading ? (
-              <p className="text-center text-warm">Loading products...</p>
-            ) : (
-              products.map((p) => <ProductCard product={p} key={p._id || p.name} />)
-            )}
-          </div>
-=======
 
           {loading && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -295,7 +254,6 @@ export default function Home() {
           {!loading && !error && visibleProducts.length === 0 && (
             <p className="text-muted text-sm text-center py-8">Nothing to show here yet.</p>
           )}
->>>>>>> 24139a465c35ce33bc363a8ff01e5d6c9b9a4941
         </div>
       </section>
 
