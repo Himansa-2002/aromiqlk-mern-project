@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
 
@@ -19,6 +19,10 @@ const icons = {
   gift: <><rect x="4" y="9" width="16" height="11" rx="1" /><path d="M4 9h16M12 9v11M8 9c-2-3 0-5 2-5s2 3 2 5M16 9c2-3 0-5-2-5s-2 3-2 5" /></>,
   vial: <><rect x="9" y="4" width="6" height="16" rx="3" /><path d="M9 12h6" /></>,
 };
+
+
+// Removed top-level state; will be defined inside component
+
 
 const whyUs = [
   ["100% Authentic", "Every bottle is sourced directly from authorised distributors — never diluted, never fake."],
@@ -56,12 +60,12 @@ export default function Home() {
     fetch("/api/categories")
       .then((r) => (r.ok ? r.json() : []))
       .then(setCategories)
-      .catch(() => {});
+      .catch(() => { });
 
     fetch("/api/brands")
       .then((r) => (r.ok ? r.json() : []))
       .then(setBrands)
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const visibleProducts = tab === "new" ? homeData.newArrivals : homeData.bestSellers;
@@ -225,9 +229,8 @@ export default function Home() {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`text-xs uppercase tracking-widest pb-2.5 border-b transition-colors ${
-                  tab === t ? "text-gold-bright border-gold" : "text-muted border-transparent"
-                }`}
+                className={`text-xs uppercase tracking-widest pb-2.5 border-b transition-colors ${tab === t ? "text-gold-bright border-gold" : "text-muted border-transparent"
+                  }`}
               >
                 {t === "new" ? "New Arrivals" : "Best Sellers"}
               </button>
