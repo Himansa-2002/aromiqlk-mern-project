@@ -4,9 +4,13 @@ import ProductCard from "../components/ProductCard.jsx";
 
 export default function ProductDetails() {
   const { slug } = useParams();
+
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [activeSize, setActiveSize] = useState(0);
   const [qty, setQty] = useState(1);
   const navigate = useNavigate();
@@ -112,6 +116,55 @@ export default function ProductDetails() {
     );
   }
 
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    setProduct(null);
+    setActiveSize(0);
+    setQty(1);
+
+    fetch(`/api/products/${slug}`)
+      .then((r) => {
+        if (!r.ok) throw new Error("Product not found");
+        return r.json();
+      })
+      .then((data) => {
+        setProduct(data);
+        fetch(`/api/products/${data._id}/related`)
+          .then((r) => (r && r.ok ? r.json() : []))
+          .then((relatedData) => setRelated(relatedData || []))
+          .catch(() => { });
+        return fetch(`/api/products/${data._id}/reviews`);
+      })
+      .then((r) => (r && r.ok ? r.json() : []))
+      .then((reviewData) => setReviews(reviewData || []))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <section className="py-24">
+        <div className="max-w-6xl mx-auto px-8 text-center text-muted text-sm">Loading...</div>
+      </section>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <section className="py-24">
+        <div className="max-w-6xl mx-auto px-8 text-center">
+          <p className="text-red-400 text-sm mb-4">{error || "Product not found."}</p>
+          <Link to="/shop" className="text-gold text-sm">← Back to Shop</Link>
+        </div>
+      </section>
+    );
+  }
+
+  const brandName = typeof product.brand === "object" ? product.brand?.name : product.brand;
+  const sizes = product.sizes?.length ? product.sizes : [{ label: "Full Bottle", price: product.price }];
+  const displayPrice = sizes[activeSize]?.price ?? product.price;
+
   return (
     <>
       <section className="pt-8">
@@ -136,31 +189,33 @@ export default function ProductDetails() {
           </div>
 
           <div>
-            <span className="text-xs uppercase tracking-wider text-gold">{product.brand}</span>
+            <span className="text-xs uppercase tracking-wider text-gold">{brandName}</span>
             <h1 className="font-display text-3xl md:text-4xl mt-2.5 mb-3">{product.name}</h1>
             <div className="text-gold text-sm mb-4">
-              {"★".repeat(product.rating)} <span className="text-muted text-xs">({product.reviewCount} reviews)</span>
+              {"★".repeat(Math.round(product.rating || 0))} <span className="text-muted text-xs">({product.reviewCount || 0} reviews)</span>
             </div>
-            <p className="text-muted text-sm leading-relaxed mb-6">{product.desc}</p>
+            <p className="text-muted text-sm leading-relaxed mb-6">{product.description}</p>
 
-            <div className="flex gap-8 flex-wrap mb-7">
-              <div>
-                <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Top Notes</h5>
-                <p className="text-xs text-muted max-w-[160px]">{product.top}</p>
+            {product.notes && (
+              <div className="flex gap-8 flex-wrap mb-7">
+                <div>
+                  <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Top Notes</h5>
+                  <p className="text-xs text-muted max-w-[160px]">{product.notes.top}</p>
+                </div>
+                <div>
+                  <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Middle Notes</h5>
+                  <p className="text-xs text-muted max-w-[160px]">{product.notes.middle}</p>
+                </div>
+                <div>
+                  <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Base Notes</h5>
+                  <p className="text-xs text-muted max-w-[160px]">{product.notes.base}</p>
+                </div>
               </div>
-              <div>
-                <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Middle Notes</h5>
-                <p className="text-xs text-muted max-w-[160px]">{product.middle}</p>
-              </div>
-              <div>
-                <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2">Base Notes</h5>
-                <p className="text-xs text-muted max-w-[160px]">{product.base}</p>
-              </div>
-            </div>
+            )}
 
             <h5 className="text-[11px] uppercase tracking-wider text-gold mb-2.5">Select Size</h5>
             <div className="flex gap-3 mb-7 flex-wrap">
-              {product.sizes.map((s, i) => (
+              {sizes.map((s, i) => (
                 <button
                   key={s.label}
                   onClick={() => setActiveSize(i)}
@@ -172,7 +227,7 @@ export default function ProductDetails() {
             </div>
 
             <div className="font-display text-2xl text-gold-bright mb-7">
-              Rs {product.sizes[activeSize].price.toLocaleString()}
+              Rs {displayPrice.toLocaleString()}
             </div>
 
             <div className="flex items-center gap-5 mb-7">
@@ -181,7 +236,9 @@ export default function ProductDetails() {
                 <span className="w-10 text-center text-sm">{qty}</span>
                 <button onClick={() => setQty((q) => q + 1)} className="w-9 h-10 text-gold text-lg">+</button>
               </div>
-              <span className="text-green-400 text-sm">● In Stock</span>
+              <span className="text-green-400 text-sm">
+                {(product.stock ?? 1) > 0 ? "● In Stock" : "● Out of Stock"}
+              </span>
             </div>
 
             <div className="flex gap-3.5 flex-wrap mb-7">
@@ -191,25 +248,140 @@ export default function ProductDetails() {
             </div>
 
             <div className="text-sm text-muted">
-              <div className="flex justify-between py-2 border-b border-line"><span>Brand</span><span>{product.brand}</span></div>
-              <div className="flex justify-between py-2 border-b border-line"><span>Availability</span><span>In Stock</span></div>
+              <div className="flex justify-between py-2 border-b border-line"><span>Brand</span><span>{brandName}</span></div>
+              <div className="flex justify-between py-2 border-b border-line"><span>Availability</span><span>{(product.stock ?? 1) > 0 ? "In Stock" : "Out of Stock"}</span></div>
               <div className="flex justify-between py-2 border-b border-line"><span>Delivery</span><span>2–5 working days, islandwide</span></div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="py-20">
-        <div className="max-w-6xl mx-auto px-8">
-          <div className="text-center max-w-lg mx-auto mb-12">
-            <span className="text-xs uppercase tracking-[0.3em] text-gold">You May Also Like</span>
-            <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Related Products</h2>
+      <ReviewsSection product={product} reviews={reviews} />
+
+      {related.length > 0 && (
+        <section className="py-20">
+          <div className="max-w-6xl mx-auto px-8">
+            <div className="text-center max-w-lg mx-auto mb-12">
+              <span className="text-xs uppercase tracking-[0.3em] text-gold">You May Also Like</span>
+              <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Related Products</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {related.map((r) => <ProductCard product={r} key={r._id} />)}
+            </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {related.map((r) => <ProductCard product={r} key={r._id || r.name} />)}
+        </section>
+      )}
+    </>
+  );
+}
+
+function ReviewsSection({ product, reviews }) {
+  const [name, setName] = useState("");
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [status, setStatus] = useState(null); // null | 'sending' | 'success' | 'error'
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus("sending");
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product: product._id, name, rating, comment }),
+      });
+      if (!res.ok) throw new Error();
+      setStatus("success");
+      setName("");
+      setRating(5);
+      setComment("");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <section className="py-20 border-t border-line">
+      <div className="max-w-6xl mx-auto px-8 grid md:grid-cols-[280px_1fr] gap-14">
+
+        {/* Rating summary */}
+        <div>
+          <h2 className="font-display text-2xl mb-5">Customer Reviews</h2>
+          <div className="flex items-end gap-3 mb-2">
+            <span className="font-display text-5xl text-gold-bright">{(product.rating || 0).toFixed(1)}</span>
+            <span className="text-muted text-sm mb-2">/ 5</span>
+          </div>
+          <div className="text-gold text-sm mb-2">{"★".repeat(Math.round(product.rating || 0))}{"☆".repeat(5 - Math.round(product.rating || 0))}</div>
+          <p className="text-muted text-xs">Based on {product.reviewCount || 0} review{product.reviewCount === 1 ? "" : "s"}</p>
+        </div>
+
+        {/* Review list + submit form */}
+        <div>
+          {reviews.length > 0 ? (
+            <div className="space-y-6 mb-12">
+              {reviews.map((r) => (
+                <div key={r._id} className="border-b border-line pb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <strong className="text-sm font-medium">{r.name}</strong>
+                    <div className="text-gold text-xs">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</div>
+                  </div>
+                  <p className="text-muted text-sm leading-relaxed">{r.comment}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted text-sm mb-12">No reviews yet — be the first to share your thoughts.</p>
+          )}
+
+          <div className="border border-line bg-panel p-8">
+            <h3 className="font-display text-xl mb-5">Write a Review</h3>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid grid-cols-2 gap-5">
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs uppercase tracking-wider text-gold">Your Name</label>
+                  <input
+                    value={name} onChange={(e) => setName(e.target.value)} required
+                    placeholder="Your name"
+                    className="bg-ink border border-line px-3.5 py-3 text-sm text-warm outline-none focus:border-gold"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs uppercase tracking-wider text-gold">Rating</label>
+                  <select
+                    value={rating} onChange={(e) => setRating(Number(e.target.value))}
+                    className="bg-ink border border-line px-3.5 py-3 text-sm text-warm outline-none focus:border-gold"
+                  >
+                    {[5, 4, 3, 2, 1].map((n) => (
+                      <option key={n} value={n}>{n} Star{n === 1 ? "" : "s"}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs uppercase tracking-wider text-gold">Your Review</label>
+                <textarea
+                  value={comment} onChange={(e) => setComment(e.target.value)} required rows={4}
+                  placeholder="Share your experience with this fragrance..."
+                  className="bg-ink border border-line px-3.5 py-3 text-sm text-warm outline-none focus:border-gold resize-y"
+                />
+              </div>
+              <button
+                type="submit" disabled={status === "sending"}
+                className="px-8 py-4 text-xs uppercase tracking-widest bg-gradient-to-br from-gold-bright to-gold-deep text-ink font-medium hover:brightness-110 transition disabled:opacity-60"
+              >
+                {status === "sending" ? "Submitting..." : "Submit Review"}
+              </button>
+              {status === "success" && (
+                <p className="text-gold-bright text-sm">Thanks for your review! It'll appear here once approved.</p>
+              )}
+              {status === "error" && (
+                <p className="text-red-400 text-sm">Something went wrong — please try again.</p>
+              )}
+            </form>
           </div>
         </div>
-      </section>
-    </>
+
+      </div>
+    </section>
   );
 }

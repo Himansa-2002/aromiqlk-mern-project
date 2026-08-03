@@ -1,15 +1,19 @@
+<<<<<<< HEAD
 import { useState, useEffect } from "react";
+=======
+import { useEffect, useState } from "react";
+>>>>>>> 24139a465c35ce33bc363a8ff01e5d6c9b9a4941
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
 
-const collections = [
-  { name: "Men's Collection", tag: "24 Fragrances", icon: "bottle" },
-  { name: "Women's Collection", tag: "31 Fragrances", icon: "flower" },
-  { name: "Unisex Collection", tag: "15 Fragrances", icon: "infinity" },
-  { name: "Arabic Perfume Oils", tag: "Alcohol-Free", icon: "droplet" },
-  { name: "Luxury Gift Sets", tag: "Ready to Gift", icon: "gift" },
-  { name: "Decants (5ml & 10ml)", tag: "Try Before Full", icon: "vial" },
-];
+const collectionIcons = {
+  "Men's Collection": "bottle",
+  "Women's Collection": "flower",
+  "Unisex Collection": "infinity",
+  "Arabic Perfume Oils": "droplet",
+  "Luxury Gift Sets": "gift",
+  "Decants (5ml & 10ml)": "vial",
+};
 
 const icons = {
   bottle: <><rect x="7" y="8" width="10" height="13" rx="2" /><path d="M10 8V5h4v3" /></>,
@@ -20,8 +24,11 @@ const icons = {
   vial: <><rect x="9" y="4" width="6" height="16" rx="3" /><path d="M9 12h6" /></>,
 };
 
+<<<<<<< HEAD
 // Removed top-level state; will be defined inside component
 
+=======
+>>>>>>> 24139a465c35ce33bc363a8ff01e5d6c9b9a4941
 const whyUs = [
   ["100% Authentic", "Every bottle is sourced directly from authorised distributors — never diluted, never fake."],
   ["Premium Imported Fragrances", "Curated from renowned Arabic perfume houses across the Gulf."],
@@ -39,6 +46,7 @@ const reviews = [
 
 export default function Home() {
   const [tab, setTab] = useState("new");
+<<<<<<< HEAD
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -63,6 +71,36 @@ export default function Home() {
         setLoading(false);
       });
   }, []);
+=======
+  const [homeData, setHomeData] = useState({ featuredCollections: [], newArrivals: [], bestSellers: [] });
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/home")
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load homepage data");
+        return r.json();
+      })
+      .then(setHomeData)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setCategories)
+      .catch(() => {});
+
+    fetch("/api/brands")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setBrands)
+      .catch(() => {});
+  }, []);
+
+  const visibleProducts = tab === "new" ? homeData.newArrivals : homeData.bestSellers;
+>>>>>>> 24139a465c35ce33bc363a8ff01e5d6c9b9a4941
 
   return (
     <>
@@ -120,25 +158,96 @@ export default function Home() {
             <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Curated by Character</h2>
             <p className="text-muted text-sm mt-3">Six ways into the house of Aromiq — from bold oud oils to gift-ready sets.</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-            {collections.map((c) => (
-              <Link
-                to="/shop"
-                key={c.name}
-                className="relative aspect-[4/5] border border-line bg-gradient-to-br from-panel2 to-panel hover:border-gold transition-colors flex items-end p-6"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className="absolute top-6 right-6 w-8 h-8 text-gold opacity-55">
-                  {icons[c.icon]}
-                </svg>
-                <div>
-                  <h3 className="font-display text-2xl mb-1.5">{c.name}</h3>
-                  <span className="text-xs uppercase tracking-wider text-gold">{c.tag}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
+
+          {loading && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="aspect-[4/5] border border-line bg-panel animate-pulse" />
+              ))}
+            </div>
+          )}
+
+          {!loading && error && (
+            <p className="text-red-400 text-sm text-center py-8">Couldn't load collections — is the backend running? ({error})</p>
+          )}
+
+          {!loading && !error && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              {homeData.featuredCollections.map((c) => (
+                <Link
+                  to={`/collection/${c.slug}`}
+                  key={c._id}
+                  className="relative aspect-[4/5] border border-line bg-gradient-to-br from-panel2 to-panel hover:border-gold transition-colors flex items-end p-6"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className="absolute top-6 right-6 w-8 h-8 text-gold opacity-55">
+                    {icons[collectionIcons[c.name]] || icons.bottle}
+                  </svg>
+                  <div>
+                    <h3 className="font-display text-2xl mb-1.5">{c.name}</h3>
+                    {c.description && <span className="text-xs uppercase tracking-wider text-gold">{c.description}</span>}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
+
+      {/* Shop by Category */}
+      {categories.length > 0 && (
+        <section className="py-16 border-y border-line bg-panel">
+          <div className="max-w-6xl mx-auto px-8">
+            <div className="text-center max-w-lg mx-auto mb-10">
+              <span className="text-xs uppercase tracking-[0.3em] text-gold">Browse</span>
+              <h2 className="font-display font-semibold text-2xl md:text-3xl mt-3">Shop by Category</h2>
+            </div>
+            <div className="flex flex-wrap justify-center gap-4">
+              {categories.map((cat) => (
+                <Link
+                  key={cat._id}
+                  to={`/category/${cat.slug}`}
+                  className="px-7 py-3.5 text-xs uppercase tracking-widest border border-line text-muted hover:border-gold hover:text-gold-bright transition-colors"
+                >
+                  {cat.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Shop by Brand */}
+      {brands.length > 0 && (
+        <section className="py-24">
+          <div className="max-w-6xl mx-auto px-8">
+            <div className="text-center max-w-lg mx-auto mb-12">
+              <span className="text-xs uppercase tracking-[0.3em] text-gold">The Houses We Carry</span>
+              <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Shop by Brand</h2>
+              <p className="text-muted text-sm mt-3">Authentic fragrances direct from the region's most respected perfume houses.</p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-5">
+              {brands.map((b) => (
+                <Link
+                  key={b._id}
+                  to={`/brand/${b.slug}`}
+                  className="group flex flex-col items-center gap-3.5 border border-line bg-panel py-8 px-4 hover:border-gold transition-colors"
+                >
+                  {b.logo ? (
+                    <img src={b.logo} alt={b.name} className="w-12 h-12 object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full border border-gold text-gold flex items-center justify-center font-display text-xl group-hover:bg-gold group-hover:text-ink transition-colors">
+                      {b.name.charAt(0)}
+                    </div>
+                  )}
+                  <span className="text-xs uppercase tracking-wider text-muted group-hover:text-gold-bright transition-colors text-center">
+                    {b.name}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* New Arrivals / Best Sellers */}
       <section className="py-24">
@@ -159,6 +268,7 @@ export default function Home() {
               </button>
             ))}
           </div>
+<<<<<<< HEAD
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {loading ? (
               <p className="text-center text-warm">Loading products...</p>
@@ -166,6 +276,26 @@ export default function Home() {
               products.map((p) => <ProductCard product={p} key={p._id || p.name} />)
             )}
           </div>
+=======
+
+          {loading && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="aspect-[1/1.6] border border-line bg-panel animate-pulse" />
+              ))}
+            </div>
+          )}
+
+          {!loading && !error && visibleProducts.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {visibleProducts.map((p) => <ProductCard product={p} key={p._id} />)}
+            </div>
+          )}
+
+          {!loading && !error && visibleProducts.length === 0 && (
+            <p className="text-muted text-sm text-center py-8">Nothing to show here yet.</p>
+          )}
+>>>>>>> 24139a465c35ce33bc363a8ff01e5d6c9b9a4941
         </div>
       </section>
 
@@ -259,22 +389,50 @@ export default function Home() {
       </section>
 
       {/* Newsletter */}
-      <section className="py-20 border-t border-line bg-gradient-to-b from-transparent to-ink text-center">
-        <div className="max-w-6xl mx-auto px-8">
-          <h2 className="font-display font-semibold text-3xl md:text-4xl mb-3">Join the Inner Circle</h2>
-          <p className="text-muted mb-8">New arrivals, exclusive discounts and launch drops — straight to your inbox.</p>
-          <form
-            className="flex max-w-md mx-auto border border-line"
-            onSubmit={(e) => { e.preventDefault(); alert("Thanks for subscribing!"); }}
-          >
-            <input type="email" required placeholder="Your email address" className="flex-1 bg-transparent px-5 py-4 text-sm text-warm outline-none" />
-            <button type="submit" className="px-7 bg-gold text-ink text-xs uppercase tracking-widest">Subscribe</button>
-          </form>
-        </div>
-      </section>
+      <NewsletterSection />
     </>
   );
 }
 
-/*cd aromiqlk-mern-project
-cd frontend*/
+function NewsletterSection() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState(null); // null | 'sending' | 'success' | 'error'
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus("sending");
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) throw new Error();
+      setStatus("success");
+      setEmail("");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <section className="py-20 border-t border-line bg-gradient-to-b from-transparent to-ink text-center">
+      <div className="max-w-6xl mx-auto px-8">
+        <h2 className="font-display font-semibold text-3xl md:text-4xl mb-3">Join the Inner Circle</h2>
+        <p className="text-muted mb-8">New arrivals, exclusive discounts and launch drops — straight to your inbox.</p>
+        <form className="flex max-w-md mx-auto border border-line" onSubmit={handleSubmit}>
+          <input
+            type="email" required placeholder="Your email address" value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="flex-1 bg-transparent px-5 py-4 text-sm text-warm outline-none"
+          />
+          <button type="submit" disabled={status === "sending"} className="px-7 bg-gold text-ink text-xs uppercase tracking-widest disabled:opacity-60">
+            {status === "sending" ? "..." : "Subscribe"}
+          </button>
+        </form>
+        {status === "success" && <p className="text-gold-bright text-sm mt-4">Thanks for subscribing!</p>}
+        {status === "error" && <p className="text-red-400 text-sm mt-4">Something went wrong — try again.</p>}
+      </div>
+    </section>
+  );
+}
