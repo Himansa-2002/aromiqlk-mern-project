@@ -1,18 +1,51 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
+    const navigate = useNavigate();
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const email = form.email.value;
+        const password = form.password.value;
+        try {
+            const res = await fetch('http://localhost:5000/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.message || 'Login failed');
+            }
+            const data = await res.json();
+            // Save JWT token for authenticated requests
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
+            // success
+            navigate('/');
+        } catch (err) {
+            console.error('Login error:', err);
+            setError(err.message);
+        }
+    };
+
     return (
         <div className="login-page" style={styles.container}>
             <h1 style={styles.title}>Login</h1>
-            {<form className="auth-form" style={styles.form} onSubmit={(e) => e.preventDefault()}>
-                <input type="email" placeholder="Email" style={styles.input} required />
-                <input type="password" placeholder="Password" style={styles.input} required />
+            {error && <p className="text-red-500" style={{ marginBottom: '1rem', color: 'red' }}>{error}</p>}
+            <form name="loginForm" className="auth-form" style={styles.form} onSubmit={handleSubmit}>
+                <input name="email" type="email" placeholder="Email" style={styles.input} required />
+                <input name="password" type="password" placeholder="Password" style={styles.input} required />
                 <button type="submit" style={styles.button}>Login</button>
                 <div style={styles.links}>
                     <a href="/register" style={styles.link}>Create account</a>
                     <a href="/forgot-password" style={styles.link}>Forgot password?</a>
                 </div>
-            </form>}
+            </form>
         </div>
     );
 };

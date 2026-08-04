@@ -31,7 +31,7 @@ export default function ProductDetails() {
         fetch(`/api/products/${data._id}/related`)
           .then((r) => (r && r.ok ? r.json() : []))
           .then((relatedData) => setRelated(relatedData || []))
-          .catch(() => {});
+          .catch(() => { });
         return fetch(`/api/products/${data._id}/reviews`);
       })
       .then((r) => (r && r.ok ? r.json() : []))
@@ -39,6 +39,97 @@ export default function ProductDetails() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [slug]);
+
+  // Fetch related products after product is loaded
+  useEffect(() => {
+    if (product && product._id) {
+      fetch(`http://localhost:5000/api/products/${product._id}/related`)
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to fetch related');
+          return res.json();
+        })
+        .then((data) => {
+          const items = data.map((p) => ({
+            ...p,
+            brand: p.brand?.name || p.brand,
+            category: p.category?.name || p.category,
+            tags: p.tags || [],
+          }));
+          setRelated(items);
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [product]);
+
+  // Debug: verify stored token works
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    console.log('Current token on mount:', token);
+    if (token) {
+      fetch('http://localhost:5000/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => console.log('Auth/me response:', data))
+        .catch((err) => console.error('Auth/me error:', err));
+    }
+  }, []);
+
+  const handleAddToCart = async (e) => {
+    e.stopPropagation();
+    if (!product) return;
+    const token = localStorage.getItem('token');
+    console.log('Add to cart token:', token);
+    if (!token) {
+      alert('You must be logged in to add items to the cart.');
+      navigate('/login');
+      return;
+    }
+    try {
+      const res = await fetch('http://localhost:5000/api/cart/items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          productId: product._id || product.name,
+          selectedSize: product.sizes[activeSize].label,
+          quantity: qty,
+        }),
+      });
+      if (!res.ok) {
+        console.error('Add to cart failed', res.status, res.statusText);
+        throw new Error('Failed to add to cart');
+      }
+      console.log('Added to cart');
+    } catch (err) {
+      console.error('Add to cart error:', err);
+    }
+  };
+
+  const handleBuyNow = (e) => {
+    e.stopPropagation();
+    if (!product) return;
+    fetch('http://localhost:5000/api/cart/items', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({
+        productId: product._id || product.name,
+        selectedSize: product.sizes[activeSize].label,
+        quantity: qty,
+      }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to add to cart');
+        return res.json();
+      })
+      .then(() => navigate('/checkout'))
+      .catch((err) => console.error(err));
+  };
 
   if (loading) {
     return (
@@ -122,9 +213,8 @@ export default function ProductDetails() {
                 <button
                   key={s.label}
                   onClick={() => setActiveSize(i)}
-                  className={`px-4 py-2.5 text-sm border transition-colors ${
-                    i === activeSize ? "border-gold text-gold-bright" : "border-line text-muted"
-                  }`}
+                  className={`px-4 py-2.5 text-sm border transition-colors ${i === activeSize ? "border-gold text-gold-bright" : "border-line text-muted"
+                    }`}
                 >
                   {s.label}
                 </button>
