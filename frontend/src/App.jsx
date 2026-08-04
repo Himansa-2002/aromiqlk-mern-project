@@ -19,7 +19,7 @@ import Checkout from "./pages/customer/CheckoutPage.jsx";
 import OrderSuccess from "./pages/customer/OrderSuccessPage.jsx";
 import Orders from "./pages/customer/OrdersPage.jsx";
 import OrderDetails from "./pages/customer/OrderDetailsPage.jsx";
-import AdminDashboard from "./pages/admin/AdminDashboardPage.jsx";
+//import AdminDashboard from "./pages/admin/AdminDashboardPage.jsx";
 import AdminOrders from "./pages/admin/AdminOrdersPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 
@@ -29,7 +29,7 @@ import CollectionPage from "./pages/CollectionPage.jsx";
 
 
 import AdminLayout from "./admin/AdminLayout.jsx";
-import AdminDashboard from "./admin/pages/AdminDashboard.jsx";
+import AdminDashboard from "./Admin/pages/AdminDashboard.jsx";
 import AdminProducts from "./admin/pages/AdminProducts.jsx";
 import AdminCategories from "./admin/pages/AdminCategories.jsx";
 import AdminBrands from "./admin/pages/AdminBrands.jsx";
