@@ -6,13 +6,22 @@ const CartPage = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        fetch('/api/cart')
+        const token = localStorage.getItem('token');
+        fetch('http://localhost:5000/api/cart', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+        })
             .then((res) => {
                 if (!res.ok) throw new Error('Network response was not ok');
                 return res.json();
             })
             .then((data) => {
-                setItems(data);
+                // Backend returns { success, cart }
+                const cartItems = data.cart?.items || [];
+                setItems(cartItems);
                 setLoading(false);
             })
             .catch((err) => {
@@ -31,7 +40,7 @@ const CartPage = () => {
                 <ul style={styles.list}>
                     {items.map((item) => (
                         <li key={item.id} style={styles.listItem}>
-                            {item.name} - ${item.price} (Qty: {item.quantity})
+                            {item.product?.name || item.name} - ${item.unitPrice} (Qty: {item.quantity})
                         </li>
                     ))}
                 </ul>

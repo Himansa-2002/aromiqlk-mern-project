@@ -57,35 +57,65 @@ export default function ProductDetails() {
     }
   }, [product]);
 
-  const handleAddToCart = (e) => {
+  // Debug: verify stored token works
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    console.log('Current token on mount:', token);
+    if (token) {
+      fetch('http://localhost:5000/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => console.log('Auth/me response:', data))
+        .catch((err) => console.error('Auth/me error:', err));
+    }
+  }, []);
+
+  const handleAddToCart = async (e) => {
     e.stopPropagation();
     if (!product) return;
-    fetch('/api/cart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        productId: product._id || product.name,
-        size: product.sizes[activeSize].label,
-        quantity: qty,
-      }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to add to cart');
-        return res.json();
-      })
-      .then(() => navigate('/cart'))
-      .catch((err) => console.error(err));
+    const token = localStorage.getItem('token');
+    console.log('Add to cart token:', token);
+    if (!token) {
+      alert('You must be logged in to add items to the cart.');
+      navigate('/login');
+      return;
+    }
+    try {
+      const res = await fetch('http://localhost:5000/api/cart/items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          productId: product._id || product.name,
+          selectedSize: product.sizes[activeSize].label,
+          quantity: qty,
+        }),
+      });
+      if (!res.ok) {
+        console.error('Add to cart failed', res.status, res.statusText);
+        throw new Error('Failed to add to cart');
+      }
+      console.log('Added to cart');
+    } catch (err) {
+      console.error('Add to cart error:', err);
+    }
   };
 
   const handleBuyNow = (e) => {
     e.stopPropagation();
     if (!product) return;
-    fetch('/api/cart', {
+    fetch('http://localhost:5000/api/cart/items', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
       body: JSON.stringify({
         productId: product._id || product.name,
-        size: product.sizes[activeSize].label,
+        selectedSize: product.sizes[activeSize].label,
         quantity: qty,
       }),
     })

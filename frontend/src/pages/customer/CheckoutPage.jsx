@@ -8,13 +8,21 @@ const CheckoutPage = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetch('/api/cart')
+        const token = localStorage.getItem('token');
+        fetch('http://localhost:5000/api/cart', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+        })
             .then((res) => {
                 if (!res.ok) throw new Error('Network response was not ok');
                 return res.json();
             })
             .then((data) => {
-                setCart(data);
+                const items = data.cart?.items || [];
+                setCart(items);
                 setLoading(false);
             })
             .catch((err) => {
@@ -29,7 +37,7 @@ const CheckoutPage = () => {
         navigate('/order-success', { state: { orderId: '12345' } });
     };
 
-    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const total = cart.reduce((sum, item) => sum + (item.unitPrice || item.price) * item.quantity, 0);
 
     return (
         <div className="checkout-page" style={styles.container}>
