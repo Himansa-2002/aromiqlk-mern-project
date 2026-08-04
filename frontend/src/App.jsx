@@ -19,14 +19,13 @@ import Checkout from "./pages/customer/CheckoutPage.jsx";
 import OrderSuccess from "./pages/customer/OrderSuccessPage.jsx";
 import Orders from "./pages/customer/OrdersPage.jsx";
 import OrderDetails from "./pages/customer/OrderDetailsPage.jsx";
-//import AdminDashboard from "./pages/admin/AdminDashboardPage.jsx";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage.jsx";
 import AdminOrders from "./pages/admin/AdminOrdersPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 
 import CategoryPage from "./pages/CategoryPage.jsx";
 import BrandPage from "./pages/BrandPage.jsx";
 import CollectionPage from "./pages/CollectionPage.jsx";
-
 
 import AdminLayout from "./admin/AdminLayout.jsx";
 import AdminDashboard from "./Admin/pages/AdminDashboard.jsx";
@@ -64,7 +63,7 @@ function SiteLayout() {
         <Route path="/order-success" element={<OrderSuccess />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/order-details" element={<OrderDetails />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
         <Route path="/admin-orders" element={<AdminOrders />} />
         <Route path="*" element={<NotFoundPage />} />
 
