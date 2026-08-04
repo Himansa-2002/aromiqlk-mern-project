@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
 
@@ -20,10 +20,6 @@ const icons = {
   vial: <><rect x="9" y="4" width="6" height="16" rx="3" /><path d="M9 12h6" /></>,
 };
 
-
-// Removed top-level state; will be defined inside component
-
-
 const whyUs = [
   ["100% Authentic", "Every bottle is sourced directly from authorised distributors — never diluted, never fake."],
   ["Premium Imported Fragrances", "Curated from renowned Arabic perfume houses across the Gulf."],
@@ -44,6 +40,7 @@ export default function Home() {
   const [homeData, setHomeData] = useState({ featuredCollections: [], newArrivals: [], bestSellers: [] });
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -60,12 +57,17 @@ export default function Home() {
     fetch("/api/categories")
       .then((r) => (r.ok ? r.json() : []))
       .then(setCategories)
-      .catch(() => { });
+      .catch(() => {});
 
     fetch("/api/brands")
       .then((r) => (r.ok ? r.json() : []))
       .then(setBrands)
-      .catch(() => { });
+      .catch(() => {});
+
+    fetch("/api/banners")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setBanners)
+      .catch(() => {});
   }, []);
 
   const visibleProducts = tab === "new" ? homeData.newArrivals : homeData.bestSellers;
@@ -117,6 +119,38 @@ export default function Home() {
           </figure>
         </div>
       </section>
+
+      {/* Promotional Banners — managed via /admin/banners, shows only Active ones */}
+      {banners.length > 0 && (
+        <section className="py-6">
+          <div className="max-w-6xl mx-auto px-8 space-y-4">
+            {banners.map((b) => (
+              <div
+                key={b._id}
+                className="relative overflow-hidden border border-line min-h-[180px] flex items-center bg-panel"
+                style={b.desktopImage ? {
+                  backgroundImage: `url(${b.desktopImage})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                } : undefined}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/70 to-transparent" />
+                <div className="relative z-10 px-10 py-8">
+                  <h3 className="font-display text-2xl md:text-3xl text-warm mb-4">{b.title}</h3>
+                  {b.ctaText && b.ctaLink && (
+                    <Link
+                      to={b.ctaLink}
+                      className="inline-block px-7 py-3.5 text-xs uppercase tracking-widest bg-gradient-to-br from-gold-bright to-gold-deep text-ink font-medium hover:brightness-110 transition"
+                    >
+                      {b.ctaText}
+                    </Link>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Featured Collections */}
       <section id="collections" className="py-24">
@@ -229,8 +263,9 @@ export default function Home() {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`text-xs uppercase tracking-widest pb-2.5 border-b transition-colors ${tab === t ? "text-gold-bright border-gold" : "text-muted border-transparent"
-                  }`}
+                className={`text-xs uppercase tracking-widest pb-2.5 border-b transition-colors ${
+                  tab === t ? "text-gold-bright border-gold" : "text-muted border-transparent"
+                }`}
               >
                 {t === "new" ? "New Arrivals" : "Best Sellers"}
               </button>
