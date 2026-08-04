@@ -2,20 +2,23 @@ import { useEffect, useState } from "react";
 
 const emptyForm = {
   name: "", slug: "", brand: "", category: "", gender: "Men's",
-  price: "", oldPrice: "", badge: "", tags: "",
+  price: "", oldPrice: "", badge: "", tags: "", image: "",
   description: "", topNotes: "", middleNotes: "", baseNotes: "",
   featured: false, newArrival: false, bestSeller: false, stock: 50,
+  collections: [],
 };
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [collectionsList, setCollectionsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const loadProducts = () => {
     setLoading(true);
@@ -29,6 +32,7 @@ export default function AdminProducts() {
     loadProducts();
     fetch("/api/brands").then((r) => r.json()).then(setBrands);
     fetch("/api/categories").then((r) => r.json()).then(setCategories);
+    fetch("/api/collections").then((r) => r.json()).then(setCollectionsList);
   }, []);
 
   const openCreate = () => {
@@ -43,13 +47,41 @@ export default function AdminProducts() {
       brand: typeof p.brand === "object" ? p.brand._id : p.brand,
       category: typeof p.category === "object" ? p.category._id : p.category,
       gender: p.gender, price: p.price, oldPrice: p.oldPrice || "",
-      badge: p.badge || "", tags: (p.tags || []).join(", "),
+      badge: p.badge || "", tags: (p.tags || []).join(", "), image: (p.images && p.images[0]) || "",
       description: p.description || "",
       topNotes: p.notes?.top || "", middleNotes: p.notes?.middle || "", baseNotes: p.notes?.base || "",
       featured: p.featured, newArrival: p.newArrival, bestSeller: p.bestSeller, stock: p.stock ?? 50,
+      collections: (p.collections || []).map((c) => (typeof c === "object" ? c._id : c)),
     });
     setEditingId(p._id);
     setShowForm(true);
+  };
+
+  const toggleCollection = (id) => {
+    setForm((prev) => ({
+      ...prev,
+      collections: prev.collections.includes(id)
+        ? prev.collections.filter((c) => c !== id)
+        : [...prev.collections, id],
+    }));
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    const data = new FormData();
+    data.append("image", file);
+    try {
+      const res = await fetch("/api/upload/admin", { method: "POST", body: data });
+      if (!res.ok) throw new Error();
+      const result = await res.json();
+      setForm((prev) => ({ ...prev, image: result.url }));
+    } catch {
+      alert("Image upload failed. Check the file is an image under 5MB.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -64,10 +96,10 @@ export default function AdminProducts() {
       name: form.name, slug: form.slug, brand: form.brand, category: form.category,
       gender: form.gender, price: Number(form.price), oldPrice: form.oldPrice ? Number(form.oldPrice) : null,
       badge: form.badge || null, tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-      description: form.description,
+      image: form.image, images: form.image ? [form.image] : [], description: form.description,
       notes: { top: form.topNotes, middle: form.middleNotes, base: form.baseNotes },
       featured: form.featured, newArrival: form.newArrival, bestSeller: form.bestSeller,
-      stock: Number(form.stock),
+      stock: Number(form.stock), collections: form.collections,
     };
 
     try {
@@ -146,11 +178,50 @@ export default function AdminProducts() {
               <div><label className={labelClass}>Stock</label><input type="number" name="stock" value={form.stock} onChange={handleChange} className={inputClass} /></div>
             </div>
             <div><label className={labelClass}>Tags (comma separated: new, bestseller, popular)</label><input name="tags" value={form.tags} onChange={handleChange} className={inputClass} /></div>
+            <div>
+              <label className={labelClass}>Product Image</label>
+              <div className="flex items-center gap-4 mb-2">
+                {form.image && (
+                  <img src={form.image} alt="Preview" className="w-16 h-16 object-cover border border-line" />
+                )}
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                    className="text-sm text-muted file:mr-4 file:px-4 file:py-2 file:border-0 file:text-xs file:uppercase file:tracking-widest file:bg-gold file:text-ink file:cursor-pointer cursor-pointer"
+                  />
+                  {uploading && <p className="text-xs text-gold mt-1">Uploading...</p>}
+                </div>
+              </div>
+              <input
+                name="image" value={form.image} onChange={handleChange}
+                placeholder="Or paste an image URL directly"
+                className={inputClass}
+              />
+            </div>
             <div><label className={labelClass}>Description</label><textarea name="description" value={form.description} onChange={handleChange} rows={3} className={inputClass} /></div>
             <div className="grid grid-cols-3 gap-4">
               <div><label className={labelClass}>Top Notes</label><input name="topNotes" value={form.topNotes} onChange={handleChange} className={inputClass} /></div>
               <div><label className={labelClass}>Middle Notes</label><input name="middleNotes" value={form.middleNotes} onChange={handleChange} className={inputClass} /></div>
               <div><label className={labelClass}>Base Notes</label><input name="baseNotes" value={form.baseNotes} onChange={handleChange} className={inputClass} /></div>
+            </div>
+            <div>
+              <label className={labelClass}>Collections</label>
+              <div className="flex flex-wrap gap-4">
+                {collectionsList.map((c) => (
+                  <label key={c._id} className="flex items-center gap-2 text-sm text-muted">
+                    <input
+                      type="checkbox"
+                      checked={form.collections.includes(c._id)}
+                      onChange={() => toggleCollection(c._id)}
+                      className="accent-gold"
+                    />
+                    {c.name}
+                  </label>
+                ))}
+              </div>
             </div>
             <div className="flex gap-6">
               <label className="flex items-center gap-2 text-sm text-muted"><input type="checkbox" name="featured" checked={form.featured} onChange={handleChange} className="accent-gold" /> Featured</label>
@@ -176,13 +247,20 @@ export default function AdminProducts() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-line text-left text-xs uppercase tracking-wider text-gold">
-                <th className="p-4">Name</th><th className="p-4">Brand</th><th className="p-4">Category</th>
+                <th className="p-4"></th><th className="p-4">Name</th><th className="p-4">Brand</th><th className="p-4">Category</th>
                 <th className="p-4">Price</th><th className="p-4">Stock</th><th className="p-4"></th>
               </tr>
             </thead>
             <tbody>
               {products.map((p) => (
                 <tr key={p._id} className="border-b border-line last:border-b-0">
+                  <td className="p-4">
+                    {p.images && p.images[0] ? (
+                      <img src={p.images[0]} alt={p.name} className="w-10 h-10 object-cover border border-line" />
+                    ) : (
+                      <div className="w-10 h-10 border border-line bg-ink flex items-center justify-center text-muted text-[10px]">—</div>
+                    )}
+                  </td>
                   <td className="p-4">{p.name}</td>
                   <td className="p-4 text-muted">{p.brand?.name}</td>
                   <td className="p-4 text-muted">{p.category?.name}</td>
