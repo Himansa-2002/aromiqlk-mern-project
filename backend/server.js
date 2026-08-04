@@ -3,6 +3,9 @@ console.log("JWT loaded:", Boolean(process.env.JWT_SECRET));
 import express from "express";
 import cors from "cors";
 import { connectDB } from "./config/db.js";
+import path from 'path';
+import { fileURLToPath } from 'url';
+import uploadRoutes from './routes/upload.js';
 
 import homeRoutes from "./routes/home.js";
 import productRoutes from "./routes/products.js";
@@ -38,6 +41,10 @@ import { notFound, errorHandler } from "./middleware/errorHandler.js";
 // Create Express application
 const app = express();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Middleware
 app.use(
   cors({
@@ -67,6 +74,7 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/banners", bannerRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Developer 2 authentication routes
 app.use("/api/auth", authRoutes);
