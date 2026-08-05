@@ -1,6 +1,9 @@
 import { Routes, Route } from "react-router-dom";
 import Header from "./components/Header.jsx";
 import Footer from "./components/Footer.jsx";
+import CartDrawer from "./components/cart/CartDrawer.jsx";
+import { CartProvider } from "./context/CartContext.jsx";
+
 import Home from "./pages/Home.jsx";
 import Shop from "./pages/Shop.jsx";
 import About from "./pages/About.jsx";
@@ -19,7 +22,6 @@ import Checkout from "./pages/customer/CheckoutPage.jsx";
 import OrderSuccess from "./pages/customer/OrderSuccessPage.jsx";
 import Orders from "./pages/customer/OrdersPage.jsx";
 import OrderDetails from "./pages/customer/OrderDetailsPage.jsx";
-//import AdminDashboardPage from "./pages/admin/AdminDashboardPage.jsx";
 import AdminOrders from "./pages/admin/AdminOrdersPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 
@@ -40,12 +42,11 @@ import AdminNewsletter from "./admin/pages/AdminNewsletter.jsx";
 
 function SiteLayout() {
   return (
-    <div className="bg-ink text-warm font-body">
+    <div className="min-h-screen bg-ink text-warm font-body">
       <Header />
 
       <Routes>
         <Route path="/" element={<Home />} />
-
         <Route path="/shop" element={<Shop />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
@@ -65,39 +66,36 @@ function SiteLayout() {
         <Route path="/order-details" element={<OrderDetails />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin-orders" element={<AdminOrders />} />
-        <Route path="*" element={<NotFoundPage />} />
-
         <Route path="/category/:slug" element={<CategoryPage />} />
         <Route path="/brand/:slug" element={<BrandPage />} />
         <Route path="/collection/:slug" element={<CollectionPage />} />
-
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
+
       <Footer />
+      <CartDrawer />
     </div>
   );
 }
 
 export default function App() {
   return (
-    <Routes>
-      {/* Admin panel — no site header/footer, its own layout with sidebar nav.
-          NOTE: not auth-protected yet — that depends on the shared auth
-          middleware/admin-layout piece, coordinate with the teammate handling
-          Module 1 (Authentication) before this goes anywhere near production. */}
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<AdminDashboard />} />
-        <Route path="products" element={<AdminProducts />} />
-        <Route path="categories" element={<AdminCategories />} />
-        <Route path="brands" element={<AdminBrands />} />
-        <Route path="collections" element={<AdminCollections />} />
-        <Route path="banners" element={<AdminBanners />} />
-        <Route path="reviews" element={<AdminReviews />} />
-        <Route path="messages" element={<AdminMessages />} />
-        <Route path="newsletter" element={<AdminNewsletter />} />
-      </Route>
+    <CartProvider>
+      <Routes>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="categories" element={<AdminCategories />} />
+          <Route path="brands" element={<AdminBrands />} />
+          <Route path="collections" element={<AdminCollections />} />
+          <Route path="banners" element={<AdminBanners />} />
+          <Route path="reviews" element={<AdminReviews />} />
+          <Route path="messages" element={<AdminMessages />} />
+          <Route path="newsletter" element={<AdminNewsletter />} />
+        </Route>
 
-      {/* Everything else is the public site, wrapped in Header/Footer */}
-      <Route path="/*" element={<SiteLayout />} />
-    </Routes>
+        <Route path="/*" element={<SiteLayout />} />
+      </Routes>
+    </CartProvider>
   );
 }

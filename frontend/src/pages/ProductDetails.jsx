@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
+import { useCart } from "../context/CartContext.jsx";
 
 export default function ProductDetails() {
   const { slug } = useParams();
+  const navigate = useNavigate();
+  const { addItem } = useCart();
 
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
@@ -13,6 +16,8 @@ export default function ProductDetails() {
 
   const [activeSize, setActiveSize] = useState(0);
   const [qty, setQty] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartMessage, setCartMessage] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -61,74 +66,89 @@ export default function ProductDetails() {
     }
   }, [product]);
 
-  // Debug: verify stored token works
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    console.log('Current token on mount:', token);
-    if (token) {
-      fetch('http://localhost:5000/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.json())
-        .then((data) => console.log('Auth/me response:', data))
-        .catch((err) => console.error('Auth/me error:', err));
-    }
-  }, []);
+  const getSelectedSize = () => {
+    const availableSizes = product?.sizes?.length
+      ? product.sizes
+      : [{ label: "Full Bottle", price: product?.price }];
+
+    return availableSizes[activeSize] || availableSizes[0];
+  };
 
   const handleAddToCart = async (e) => {
     e.stopPropagation();
-    if (!product) return;
-    const token = localStorage.getItem('token');
-    console.log('Add to cart token:', token);
-    if (!token) {
-      alert('You must be logged in to add items to the cart.');
-      navigate('/login');
+    setCartMessage("");
+
+    if (!product || addingToCart) return;
+
+    if ((product.stock ?? 1) <= 0) {
+      setCartMessage("This product is currently out of stock.");
       return;
     }
+
+    if (!localStorage.getItem("token")) {
+      navigate("/login");
+      return;
+    }
+
+    const selectedSize = getSelectedSize();
+    setAddingToCart(true);
+
     try {
-      const res = await fetch('http://localhost:5000/api/cart/items', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          productId: product._id || product.name,
-          selectedSize: product.sizes[activeSize].label,
-          quantity: qty,
-        }),
+      await addItem({
+        productId: product._id,
+        selectedSize: selectedSize?.label,
+        quantity: qty,
       });
-      if (!res.ok) {
-        console.error('Add to cart failed', res.status, res.statusText);
-        throw new Error('Failed to add to cart');
-      }
-      console.log('Added to cart');
+      setCartMessage("Added to cart successfully.");
     } catch (err) {
-      console.error('Add to cart error:', err);
+      if (err.status === 401) {
+        navigate("/login");
+        return;
+      }
+      setCartMessage(err.message || "Unable to add this product to the cart.");
+    } finally {
+      setAddingToCart(false);
     }
   };
 
-  const handleBuyNow = (e) => {
+  const handleBuyNow = async (e) => {
     e.stopPropagation();
-    if (!product) return;
-    fetch('http://localhost:5000/api/cart/items', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
-      },
-      body: JSON.stringify({
-        productId: product._id || product.name,
-        selectedSize: product.sizes[activeSize].label,
-        quantity: qty,
-      }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to add to cart');
-        return res.json();
-      })
-      .then(() => navigate('/checkout'))
-      .catch((err) => console.error(err));
+    setCartMessage("");
+
+    if (!product || addingToCart) return;
+
+    if (!localStorage.getItem("token")) {
+      navigate("/login");
+      return;
+    }
+
+    if ((product.stock ?? 1) <= 0) {
+      setCartMessage("This product is currently out of stock.");
+      return;
+    }
+
+    const selectedSize = getSelectedSize();
+    setAddingToCart(true);
+
+    try {
+      await addItem(
+        {
+          productId: product._id,
+          selectedSize: selectedSize?.label,
+          quantity: qty,
+        },
+        { openDrawer: false }
+      );
+      navigate("/checkout");
+    } catch (err) {
+      if (err.status === 401) {
+        navigate("/login");
+        return;
+      }
+      setCartMessage(err.message || "Unable to continue to checkout.");
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   if (loading) {
@@ -236,11 +256,31 @@ export default function ProductDetails() {
               </span>
             </div>
 
-            <div className="flex gap-3.5 flex-wrap mb-7">
-              <button className="px-8 py-4 text-xs uppercase tracking-widest bg-gradient-to-br from-gold-bright to-gold-deep text-ink font-medium hover:brightness-110 transition">Add to Cart</button>
-              <button className="px-8 py-4 text-xs uppercase tracking-widest border border-gold text-gold-bright hover:bg-gold/10 transition">Buy Now</button>
+            <div className="flex gap-3.5 flex-wrap mb-3">
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={addingToCart || (product.stock ?? 1) <= 0}
+                className="px-8 py-4 text-xs uppercase tracking-widest bg-gradient-to-br from-gold-bright to-gold-deep text-ink font-medium hover:brightness-110 transition disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {addingToCart ? "Adding..." : "Add to Cart"}
+              </button>
+              <button
+                type="button"
+                onClick={handleBuyNow}
+                disabled={addingToCart || (product.stock ?? 1) <= 0}
+                className="px-8 py-4 text-xs uppercase tracking-widest border border-gold text-gold-bright hover:bg-gold/10 transition disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Buy Now
+              </button>
               <a href="https://wa.me/94788778808" target="_blank" rel="noreferrer" className="px-8 py-4 text-xs uppercase tracking-widest border border-warm/35 text-warm hover:border-warm transition">WhatsApp Inquiry</a>
             </div>
+
+            {cartMessage && (
+              <p className={`mb-7 text-sm ${cartMessage.includes("successfully") ? "text-green-400" : "text-red-400"}`}>
+                {cartMessage}
+              </p>
+            )}
 
             <div className="text-sm text-muted">
               <div className="flex justify-between py-2 border-b border-line"><span>Brand</span><span>{brandName}</span></div>
