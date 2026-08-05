@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
 
 export default function ProductDetails() {
   const { slug } = useParams();
+  const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
@@ -12,6 +13,8 @@ export default function ProductDetails() {
   const [error, setError] = useState(null);
 
   const [activeSize, setActiveSize] = useState(0);
+  const [cartItems, setCartItems] = useState([]); // holds items added to cart
+  const [cartOpen, setCartOpen] = useState(false); // controls side cart visibility
   const [qty, setQty] = useState(1);
 
   useEffect(() => {
@@ -103,6 +106,12 @@ export default function ProductDetails() {
         throw new Error('Failed to add to cart');
       }
       console.log('Added to cart');
+      const newItem = { product, size: product.sizes[activeSize].label, quantity: qty };
+      setCartItems((prev) => [...prev, newItem]);
+      setCartOpen(true);
+      // Persist cart in localStorage
+      const stored = JSON.parse(localStorage.getItem('cartItems') || '[]');
+      localStorage.setItem('cartItems', JSON.stringify([...stored, newItem]));
     } catch (err) {
       console.error('Add to cart error:', err);
     }
@@ -130,6 +139,40 @@ export default function ProductDetails() {
       .then(() => navigate('/checkout'))
       .catch((err) => console.error(err));
   };
+
+  // Side Cart component
+  const SideCart = () => (
+    <aside className="fixed top-0 right-0 h-full w-80 bg-black text-gold shadow-lg transform transition-transform duration-300" style={{ transform: cartOpen ? 'translateX(0)' : 'translateX(100%)' }}>
+      <div className="p-4 flex justify-between items-center border-b border-gold">
+        <h2 className="text-lg font-bold">Your Cart</h2>
+        <button onClick={() => setCartOpen(false)} className="text-gold hover:text-gold-bright">✕</button>
+      </div>
+      <div className="p-4 overflow-y-auto flex-1">
+        {cartItems.length === 0 ? (
+          <p className="text-muted">Cart is empty.</p>
+        ) : (
+          <ul className="space-y-3">
+            {cartItems.map((item, idx) => (
+              <li key={idx} className="border-b border-gold pb-2">
+                <div className="flex justify-between">
+                  <span>{item.product.name} ({item.size})</span>
+                  <span>× {item.quantity}</span>
+                </div>
+                <div className="text-sm text-gold-bright">Rs {item.product.price * item.quantity}</div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      {cartItems.length > 0 && (
+        <div className="p-4 border-t border-gold">
+          <button onClick={() => navigate('/checkout')} className="w-full bg-gold text-black py-2 rounded hover:brightness-110 transition">
+            Proceed to Checkout
+          </button>
+        </div>
+      )}
+    </aside>
+  );
 
   if (loading) {
     return (
@@ -237,8 +280,8 @@ export default function ProductDetails() {
             </div>
 
             <div className="flex gap-3.5 flex-wrap mb-7">
-              <button className="px-8 py-4 text-xs uppercase tracking-widest bg-gradient-to-br from-gold-bright to-gold-deep text-ink font-medium hover:brightness-110 transition">Add to Cart</button>
-              <button className="px-8 py-4 text-xs uppercase tracking-widest border border-gold text-gold-bright hover:bg-gold/10 transition">Buy Now</button>
+              <button onClick={handleAddToCart} className="px-8 py-4 text-xs uppercase tracking-widest bg-gradient-to-br from-gold-bright to-gold-deep text-ink font-medium hover:brightness-110 transition">Add to Cart</button>
+              <button onClick={handleBuyNow} className="px-8 py-4 text-xs uppercase tracking-widest border border-gold text-gold-bright hover:bg-gold/10 transition">Buy Now</button>
               <a href="https://wa.me/94788778808" target="_blank" rel="noreferrer" className="px-8 py-4 text-xs uppercase tracking-widest border border-warm/35 text-warm hover:border-warm transition">WhatsApp Inquiry</a>
             </div>
 

@@ -19,14 +19,18 @@ const CartPage = () => {
                 return res.json();
             })
             .then((data) => {
-                // Backend returns { success, cart }
                 const cartItems = data.cart?.items || [];
                 setItems(cartItems);
                 setLoading(false);
+                // also sync to localStorage
+                localStorage.setItem('cartItems', JSON.stringify(cartItems));
             })
             .catch((err) => {
-                setError(err.message);
+                // fallback to localStorage
+                const stored = JSON.parse(localStorage.getItem('cartItems') || '[]');
+                setItems(stored);
                 setLoading(false);
+                setError(err.message);
             });
     }, []);
 
@@ -56,17 +60,17 @@ const styles = {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '80vh',
-        background: 'transparent',
+        background: 'black',
         padding: '2rem',
         borderRadius: '1rem',
-        boxShadow: '0 4px 30px rgba(0,0,0,0.1)',
+        boxShadow: '0 4px 30px rgba(0,0,0,0.5)',
         backdropFilter: 'blur(5px)',
     },
     title: {
         fontFamily: "'Inter', sans-serif",
         fontSize: '2rem',
         marginBottom: '1rem',
-        color: 'hsl(30, 30%, 80%)',
+        color: 'gold',
     },
     list: {
         width: '100%',
@@ -76,7 +80,7 @@ const styles = {
     },
     listItem: {
         background: 'hsl(210, 30%, 15%)',
-        color: 'hsl(30,30%,80%)',
+        color: 'gold',
         padding: '0.75rem 1rem',
         marginBottom: '0.5rem',
         borderRadius: '0.5rem',
