@@ -147,3 +147,34 @@ export const deleteProduct = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// GET /api/products/admin/export — downloads all products as a CSV file
+export const exportProductsCSV = async (req, res) => {
+  try {
+    const products = await Product.find()
+      .populate('brand', 'name')
+      .populate('category', 'name')
+      .sort({ createdAt: -1 });
+
+    const escape = (val) => {
+      const str = String(val ?? '');
+      return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    };
+
+    const header = ['Name', 'Slug', 'Brand', 'Category', 'Gender', 'Price', 'Old Price', 'Stock', 'Rating', 'Review Count', 'Tags', 'Featured', 'New Arrival', 'Best Seller', 'Created At'];
+    const rows = products.map((p) => [
+      p.name, p.slug, p.brand?.name || '', p.category?.name || '', p.gender,
+      p.price, p.oldPrice ?? '', p.stock, p.rating, p.reviewCount,
+      (p.tags || []).join('; '), p.featured, p.newArrival, p.bestSeller,
+      p.createdAt.toISOString(),
+    ]);
+
+    const csv = [header, ...rows].map((row) => row.map(escape).join(',')).join('\n');
+
+    res.header('Content-Type', 'text/csv');
+    res.attachment('products.csv');
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
