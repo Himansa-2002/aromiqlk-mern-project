@@ -63,7 +63,10 @@ function SiteLayout() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order-success" element={<OrderSuccess />} />
         <Route path="/orders" element={<Orders />} />
-        <Route path="/order-details" element={<OrderDetails />} />
+        <Route
+          path="/order-details/:orderNumber"
+          element={<OrderDetails />}
+        />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin-orders" element={<AdminOrders />} />
         <Route path="/category/:slug" element={<CategoryPage />} />

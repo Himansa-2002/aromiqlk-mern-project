@@ -125,7 +125,7 @@ export default function Header() {
           {isLoggedIn ? (
             <div className="flex items-center gap-3">
               <Link
-                to="/dashboard"
+                to="/profile"
                 className="px-5 py-2.5 text-xs uppercase tracking-widest border border-line text-gold hover:border-gold hover:text-gold-bright transition"
               >
                 My Account
