@@ -136,9 +136,17 @@ export default function AdminProducts() {
           <h1 className="font-display text-2xl mb-1">Products</h1>
           <p className="text-muted text-sm">{products.length} product{products.length === 1 ? "" : "s"}</p>
         </div>
-        <button onClick={openCreate} className="px-6 py-3 text-xs uppercase tracking-widest bg-gold text-ink font-medium hover:brightness-110 transition">
-          + Add Product
-        </button>
+        <div className="flex gap-3">
+          <a
+            href="/api/products/admin/export"
+            className="px-6 py-3 text-xs uppercase tracking-widest border border-gold text-gold-bright hover:bg-gold/10 transition"
+          >
+            Export CSV
+          </a>
+          <button onClick={openCreate} className="px-6 py-3 text-xs uppercase tracking-widest bg-gold text-ink font-medium hover:brightness-110 transition">
+            + Add Product
+          </button>
+        </div>
       </div>
 
       {showForm && (
