@@ -97,7 +97,7 @@ export default function Header() {
             aria-label="Search"
             className="w-9 h-9 flex items-center justify-center rounded-full border border-line text-gold hover:border-gold hover:text-gold-bright transition"
           >
-            🔍
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.6" /><path d="M21 21l-4.3-4.3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
           </button>
 
 
@@ -107,7 +107,7 @@ export default function Header() {
             aria-label="Cart"
             className="w-9 h-9 flex items-center justify-center rounded-full border border-line text-gold hover:border-gold hover:text-gold-bright transition"
           >
-            🛒
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 6h2l1.6 10.2A2 2 0 0 0 9.6 18h7.8a2 2 0 0 0 2-1.6L21 8H7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /><circle cx="10" cy="21" r="1.3" fill="currentColor" /><circle cx="18" cy="21" r="1.3" fill="currentColor" /></svg>
           </Link>
 
 
@@ -118,7 +118,7 @@ export default function Header() {
 
               <Link
                 to="/dashboard"
-                className="hidden md:block text-xs uppercase tracking-widest text-warm hover:text-gold-bright transition"
+                className="px-5 py-2.5 text-xs uppercase tracking-widest border border-line text-gold hover:border-gold hover:text-gold-bright transition"
               >
                 My Account
               </Link>
@@ -126,20 +126,7 @@ export default function Header() {
 
               <button
                 onClick={handleLogout}
-                className="
-                px-5 py-2.5
-                text-xs
-                uppercase
-                tracking-widest
-                border
-                border-gold
-                text-gold-bright
-                rounded
-                hover:bg-gold
-                hover:text-ink
-                transition-all
-                duration-300
-                "
+                className="px-5 py-2.5 text-xs uppercase tracking-widest border border-line text-gold hover:border-gold hover:text-gold-bright transition"
               >
                 Sign Out
               </button>
@@ -151,21 +138,7 @@ export default function Header() {
 
             <button
               onClick={() => navigate("/login")}
-              className="
-              px-5 py-2.5
-              text-xs
-              uppercase
-              tracking-widest
-              bg-gradient-to-r
-              from-gold-bright
-              to-gold
-              text-ink
-              rounded
-              font-medium
-              hover:brightness-110
-              transition-all
-              duration-300
-              "
+              className="px-5 py-2.5 text-xs uppercase tracking-widest border border-line text-gold hover:border-gold hover:text-gold-bright transition"
             >
               Sign In
             </button>
