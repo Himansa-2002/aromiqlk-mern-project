@@ -3,6 +3,8 @@ import Header from "./components/Header.jsx";
 import Footer from "./components/Footer.jsx";
 import CartDrawer from "./components/cart/CartDrawer.jsx";
 import { CartProvider } from "./context/CartContext.jsx";
+import { AuthProvider } from "./context/AuthContext.jsx";
+import { ProtectedRoute, AdminRoute } from "./components/auth/ProtectedRoutes.jsx";
 
 import Home from "./pages/Home.jsx";
 import Shop from "./pages/Shop.jsx";
@@ -22,7 +24,7 @@ import Checkout from "./pages/customer/CheckoutPage.jsx";
 import OrderSuccess from "./pages/customer/OrderSuccessPage.jsx";
 import Orders from "./pages/customer/OrdersPage.jsx";
 import OrderDetails from "./pages/customer/OrderDetailsPage.jsx";
-import AdminOrders from "./pages/admin/AdminOrdersPage.jsx";
+import AdminOrdersPage from "./admin/pages/AdminOrdersPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 
 import CategoryPage from "./pages/CategoryPage.jsx";
@@ -55,20 +57,17 @@ function SiteLayout() {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/address" element={<Address />} />
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/order-success" element={<OrderSuccess />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route
-          path="/order-details/:orderNumber"
-          element={<OrderDetails />}
-        />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
-        <Route path="/admin-orders" element={<AdminOrders />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/address" element={<Address />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/order-details/:orderNumber" element={<OrderDetails />} />
+        </Route>
+
         <Route path="/category/:slug" element={<CategoryPage />} />
         <Route path="/brand/:slug" element={<BrandPage />} />
         <Route path="/collection/:slug" element={<CollectionPage />} />
@@ -83,22 +82,25 @@ function SiteLayout() {
 
 export default function App() {
   return (
-    <CartProvider>
-      <Routes>
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="products" element={<AdminProducts />} />
-          <Route path="categories" element={<AdminCategories />} />
-          <Route path="brands" element={<AdminBrands />} />
-          <Route path="collections" element={<AdminCollections />} />
-          <Route path="banners" element={<AdminBanners />} />
-          <Route path="reviews" element={<AdminReviews />} />
-          <Route path="messages" element={<AdminMessages />} />
-          <Route path="newsletter" element={<AdminNewsletter />} />
-        </Route>
+    <AuthProvider>
+      <CartProvider>
+        <Routes>
+          <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="categories" element={<AdminCategories />} />
+            <Route path="brands" element={<AdminBrands />} />
+            <Route path="collections" element={<AdminCollections />} />
+            <Route path="banners" element={<AdminBanners />} />
+            <Route path="reviews" element={<AdminReviews />} />
+            <Route path="messages" element={<AdminMessages />} />
+            <Route path="newsletter" element={<AdminNewsletter />} />
+            <Route path="orders" element={<AdminOrdersPage />} />
+          </Route>
 
-        <Route path="/*" element={<SiteLayout />} />
-      </Routes>
-    </CartProvider>
+          <Route path="/*" element={<SiteLayout />} />
+        </Routes>
+      </CartProvider>
+    </AuthProvider>
   );
 }

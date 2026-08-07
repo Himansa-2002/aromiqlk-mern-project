@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import User from '../models/User.js';
 import PasswordResetToken from '../models/PasswordResetToken.js';
 import { generateToken } from '../utils/jwt.js';
+import { emailService } from '../services/emailService.js';
 
 const sendAuthResponse = (
   res,
@@ -100,6 +101,9 @@ export const registerUser = async (
       password,
       role: 'customer',
     });
+
+    // Send Welcome Email
+    emailService.sendWelcomeEmail(user);
 
     return sendAuthResponse(
       res,
@@ -279,25 +283,13 @@ export const forgotPassword = async (
       `${frontendUrl}/reset-password` +
       `?token=${rawToken}`;
 
-    const response = {
+    // Send email with reset url
+    await emailService.sendPasswordResetEmail(user, resetUrl);
+
+    return res.status(200).json({
       success: true,
-      message:
-        'If an account exists with that email, password reset instructions have been generated.',
-    };
-
-    /*
-     * Development-only response.
-     * In production, send resetUrl by email instead.
-     */
-    if (
-      process.env.NODE_ENV !== 'production'
-    ) {
-      response.resetToken = rawToken;
-      response.resetUrl = resetUrl;
-      response.expiresInMinutes = 15;
-    }
-
-    return res.status(200).json(response);
+      message: 'If an account exists with that email, password reset instructions have been emailed.'
+    });
   } catch (error) {
     return next(error);
   }

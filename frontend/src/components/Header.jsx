@@ -1,14 +1,12 @@
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useCart } from "../context/CartContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Header() {
   const navigate = useNavigate();
   const { itemCount, openCart, resetCart } = useCart();
-
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    Boolean(localStorage.getItem("token"))
-  );
+  const { isLoggedIn, logout } = useAuth();
 
   const navClass = ({ isActive }) =>
     `text-xs uppercase tracking-widest pb-1 border-b transition-colors duration-200 ${isActive
@@ -17,11 +15,8 @@ export default function Header() {
     }`;
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     resetCart();
-    setIsLoggedIn(false);
-    navigate("/login");
+    logout(true);
   };
 
   return (
