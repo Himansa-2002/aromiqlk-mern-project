@@ -7,6 +7,7 @@ import {
   decreaseOrderInventory,
   restoreOrderInventory,
 } from "../services/inventoryService.js";
+import { emailService } from "../services/emailService.js";
 
 const ORDER_STATUSES = [
   "pending",
@@ -348,6 +349,9 @@ export const updateAdminOrderStatus = async (req, res, next) => {
 
     await order.save();
 
+    // Fire off order status update email
+    emailService.sendOrderStatusEmail(order.customer, order);
+
     return res.status(200).json({
       success: true,
       message: `Order status updated to ${status}`,
@@ -555,6 +559,9 @@ export const updateAdminOrderTracking = async (req, res, next) => {
     }
 
     await order.save();
+
+    // Fire off order status/tracking update email
+    emailService.sendOrderStatusEmail(order.customer, order);
 
     return res.status(200).json({
       success: true,

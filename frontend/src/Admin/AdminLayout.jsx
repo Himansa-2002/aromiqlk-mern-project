@@ -10,6 +10,7 @@ const navItems = [
   { to: "/admin/reviews", label: "Reviews" },
   { to: "/admin/messages", label: "Contact Messages" },
   { to: "/admin/newsletter", label: "Newsletter" },
+  { to: "/admin/orders", label: "Orders" },
 ];
 
 export default function AdminLayout() {
@@ -27,10 +28,9 @@ export default function AdminLayout() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `block px-6 py-3 text-sm border-l-2 transition-colors ${
-                  isActive
-                    ? "border-gold text-gold-bright bg-ink/50"
-                    : "border-transparent text-muted hover:text-warm hover:bg-ink/30"
+                `block px-6 py-3 text-sm border-l-2 transition-colors ${isActive
+                  ? "border-gold text-gold-bright bg-ink/50"
+                  : "border-transparent text-muted hover:text-warm hover:bg-ink/30"
                 }`
               }
             >

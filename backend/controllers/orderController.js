@@ -13,6 +13,7 @@ import {
 } from "./couponController.js";
 
 import { calculateShipping } from "../services/shippingService.js";
+import { emailService } from "../services/emailService.js";
 
 const normalizeCouponCode = (code) => {
   if (typeof code !== "string") {
@@ -345,6 +346,9 @@ export const createOrder = async (req, res, next) => {
     cart.items = [];
     await cart.save();
 
+    // Fire off order confirmation in the background
+    emailService.sendOrderConfirmationEmail(user, order);
+
     return res.status(201).json({
       success: true,
       message: "Order placed successfully",
@@ -540,10 +544,10 @@ export const trackOrder = async (
         timeline:
           order.orderStatus === 'cancelled'
             ? timeline.map((item) => ({
-                ...item,
-                completed: false,
-                current: false,
-              }))
+              ...item,
+              completed: false,
+              current: false,
+            }))
             : timeline,
       },
     });

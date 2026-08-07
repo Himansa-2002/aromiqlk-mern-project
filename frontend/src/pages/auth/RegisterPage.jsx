@@ -1,107 +1,134 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
-const RegisterPage = () => {
+export default function RegisterPage() {
     const navigate = useNavigate();
     const [error, setError] = useState('');
+    const [submitting, setSubmitting] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+        setSubmitting(true);
+
         const form = e.target;
         const firstName = form.firstName.value;
         const lastName = form.lastName.value;
         const email = form.email.value;
         const password = form.password.value;
+
         try {
-            const res = await fetch('/api/auth/register', {
+            const baseUrl = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+            const res = await fetch(`${baseUrl}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ firstName, lastName, email, password }),
             });
+
+            const data = await res.json();
+
             if (!res.ok) {
-                const data = await res.json();
                 throw new Error(data.message || 'Registration failed');
             }
             // success – navigate to login page
-            navigate('/login');
+            navigate('/login', { state: { message: "Account created successfully. Please sign in." } });
         } catch (err) {
-            console.error('Register error:', err);
             setError(err.message);
+        } finally {
+            setSubmitting(false);
         }
     };
 
     return (
-        <div className="register-page" style={styles.container}>
-            <h1 style={styles.title}>Register</h1>
-            {error && <p className="text-red-500" style={{ marginBottom: '1rem' }}>{error}</p>}
-            <form name="registerForm" className="auth-form" style={styles.form} onSubmit={handleSubmit}>
-                <input name="firstName" type="text" placeholder="First Name" style={styles.input} required />
-                <input name="lastName" type="text" placeholder="Last Name" style={styles.input} required />
-                <input name="email" type="email" placeholder="Email" style={styles.input} required />
-                <input name="password" type="password" placeholder="Password" style={styles.input} required />
-                <button type="submit" style={styles.button}>Register</button>
-                <div style={styles.links}>
-                    <a href="/login" style={styles.link}>Already have an account?</a>
+        <main className="min-h-[85vh] flex items-center justify-center p-6 bg-ink font-body">
+            <div className="w-full max-w-lg border border-line bg-panel p-8 md:p-10 shadow-2xl my-8">
+                <div className="text-center mb-8">
+                    <h1 className="font-display text-4xl text-warm mb-3">Create Account</h1>
+                    <p className="text-sm text-muted">
+                        Join aromiq.lk to experience luxury fragrances.
+                    </p>
                 </div>
-            </form>
-        </div>
+
+                {error && (
+                    <div className="mb-6 p-4 border border-red-500/30 bg-red-500/10 text-red-400 text-sm italic text-center">
+                        {error}
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2 relative">
+                            <label className="text-[10px] uppercase tracking-widest text-gold font-semibold bg-panel px-1 absolute -top-2 left-3">
+                                First Name
+                            </label>
+                            <input
+                                name="firstName"
+                                type="text"
+                                required
+                                className="w-full bg-transparent border border-line text-warm px-4 py-4 text-sm focus:outline-none focus:border-gold transition-colors"
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-2 relative mt-4 md:mt-0">
+                            <label className="text-[10px] uppercase tracking-widest text-gold font-semibold bg-panel px-1 absolute -top-2 left-3">
+                                Last Name
+                            </label>
+                            <input
+                                name="lastName"
+                                type="text"
+                                required
+                                className="w-full bg-transparent border border-line text-warm px-4 py-4 text-sm focus:outline-none focus:border-gold transition-colors"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 relative mt-2">
+                        <label className="text-[10px] uppercase tracking-widest text-gold font-semibold bg-panel px-1 absolute -top-2 left-3">
+                            Email Address
+                        </label>
+                        <input
+                            name="email"
+                            type="email"
+                            required
+                            className="w-full bg-transparent border border-line text-warm px-4 py-4 text-sm focus:outline-none focus:border-gold transition-colors"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-2 relative mt-2">
+                        <label className="text-[10px] uppercase tracking-widest text-gold font-semibold bg-panel px-1 absolute -top-2 left-3">
+                            Password
+                        </label>
+                        <input
+                            name="password"
+                            type="password"
+                            required
+                            className="w-full bg-transparent border border-line text-warm px-4 py-4 text-sm focus:outline-none focus:border-gold transition-colors"
+                        />
+                        <p className="text-[10px] text-muted text-right mt-1">Must be at least 6 characters</p>
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className="w-full mt-2 bg-gradient-to-br from-gold-bright to-gold-deep py-4 text-xs font-semibold uppercase tracking-[0.2em] text-ink hover:brightness-110 transition disabled:opacity-50 disabled:grayscale"
+                    >
+                        {submitting ? "Processing..." : "Create Account"}
+                    </button>
+
+                    <p className="text-center text-[10px] text-muted">
+                        By registering, you agree to our <span className="underline cursor-pointer hover:text-gold">Terms of Service</span> and <span className="underline cursor-pointer hover:text-gold">Privacy Policy</span>.
+                    </p>
+                </form>
+
+                <div className="mt-8 pt-6 border-t border-line text-center">
+                    <p className="text-sm text-muted">
+                        Already have an account?{' '}
+                        <Link to="/login" className="text-gold font-medium hover:text-gold-bright transition-colors px-1">
+                            Sign In
+                        </Link>
+                    </p>
+                </div>
+            </div>
+        </main>
     );
-};
-
-const styles = {
-    container: {
-        padding: '2rem',
-        borderRadius: '1rem',
-        boxShadow: '0 4px 30px rgba(0,0,0,0.2)',
-        backdropFilter: 'blur(5px)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '80vh',
-        background: 'transparent',
-    },
-    title: {
-        fontFamily: "'Inter', sans-serif",
-        fontSize: '2rem',
-        marginBottom: '1rem',
-        color: 'hsl(30, 30%, 80%)',
-    },
-    form: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1rem',
-        width: '100%',
-        maxWidth: '320px',
-        marginTop: '1.5rem',
-    },
-    input: {
-        padding: '0.75rem 1rem',
-        border: '1px solid hsl(210, 20%, 40%)',
-        borderRadius: '0.5rem',
-        fontSize: '1rem',
-        background: 'hsla(210, 29%, 6%, 1.00)',
-        color: 'hsl(30,30%,80%)',
-    },
-    button: {
-        padding: '0.75rem 1rem',
-        background: 'hsl(40, 80%, 45%)',
-        color: 'white',
-        border: 'none',
-        borderRadius: '0.5rem',
-        fontSize: '1rem',
-        cursor: 'pointer',
-        transition: 'background 0.2s',
-    },
-    links: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        fontSize: '0.9rem',
-    },
-    link: {
-        color: 'hsl(30,30%,80%)',
-        textDecoration: 'underline',
-    },
-};
-
-export default RegisterPage;
+}
