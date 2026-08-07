@@ -15,6 +15,7 @@ export default function ProductDetails() {
   const [error, setError] = useState(null);
 
   const [activeSize, setActiveSize] = useState(0);
+  const [activeImage, setActiveImage] = useState(0);
   const [qty, setQty] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartMessage, setCartMessage] = useState("");
@@ -24,6 +25,7 @@ export default function ProductDetails() {
     setError(null);
     setProduct(null);
     setActiveSize(0);
+    setActiveImage(0);
     setQty(1);
 
     fetch(`/api/products/${slug}`)
@@ -173,6 +175,8 @@ export default function ProductDetails() {
   const brandName = typeof product.brand === "object" ? product.brand?.name : product.brand;
   const sizes = product.sizes?.length ? product.sizes : [{ label: "Full Bottle", price: product.price }];
   const displayPrice = sizes[activeSize]?.price ?? product.price;
+  const productImages = (product.images || []).filter(Boolean);
+  const selectedImage = productImages[activeImage] || productImages[0];
 
   return (
     <>
@@ -187,19 +191,28 @@ export default function ProductDetails() {
 
           <div>
             <div className="aspect-[4/5] border border-line bg-gradient-to-br from-gold/15 to-panel flex items-center justify-center mb-3.5 overflow-hidden">
-              {product.images?.[0] ? (
-                <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+              {selectedImage ? (
+                <img src={selectedImage} alt={`${product.name} view ${activeImage + 1}`} className="w-full h-full object-cover" />
               ) : (
                 <svg viewBox="0 0 120 160" fill="none" className="w-[34%]"><rect x="34" y="42" width="52" height="98" rx="10" stroke="#c9a961" strokeWidth="1.2" /><path d="M46 18h28l10 13-10 10H46l-10-10 10-13Z" stroke="#c9a961" strokeWidth="1.2" /></svg>
               )}
             </div>
-            <div className="flex gap-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className={`w-[70px] h-[84px] border bg-panel flex items-center justify-center cursor-pointer ${i === 0 ? "border-gold" : "border-line"}`}>
-                  <svg viewBox="0 0 120 160" fill="none" className="w-[55%] opacity-80"><rect x="34" y="42" width="52" height="98" rx="10" stroke="#c9a961" strokeWidth="1.2" /></svg>
-                </div>
-              ))}
-            </div>
+            {productImages.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-1">
+                {productImages.map((image, index) => (
+                  <button
+                    key={`${image}-${index}`}
+                    type="button"
+                    onClick={() => setActiveImage(index)}
+                    aria-label={`Show image ${index + 1} of ${product.name}`}
+                    aria-pressed={activeImage === index}
+                    className={`w-[70px] h-[84px] shrink-0 overflow-hidden border bg-panel transition-colors ${activeImage === index ? "border-gold" : "border-line hover:border-gold/60"}`}
+                  >
+                    <img src={image} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
