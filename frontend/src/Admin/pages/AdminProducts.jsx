@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 
+const STANDARD_SIZES = ["5ml Decant", "10ml Decant", "Full Bottle 100ml"];
+
 const emptyForm = {
   name: "", slug: "", brand: "", category: "", gender: "Men's",
   price: "", oldPrice: "", badge: "", tags: "", image: "",
   description: "", topNotes: "", middleNotes: "", baseNotes: "",
   featured: false, newArrival: false, bestSeller: false, stock: 50,
-  collections: [],
+  collections: [], sizes: [],
 };
 
 export default function AdminProducts() {
@@ -52,6 +54,13 @@ export default function AdminProducts() {
       topNotes: p.notes?.top || "", middleNotes: p.notes?.middle || "", baseNotes: p.notes?.base || "",
       featured: p.featured, newArrival: p.newArrival, bestSeller: p.bestSeller, stock: p.stock ?? 50,
       collections: (p.collections || []).map((c) => (typeof c === "object" ? c._id : c)),
+      // Any size saved on the product that matches one of our 3 standard
+      // labels gets picked up here; a custom/legacy label from before
+      // this change just won't show a checkbox (still safe, not deleted
+      // unless you resave without it).
+      sizes: (p.sizes || [])
+        .filter((s) => STANDARD_SIZES.includes(s.label))
+        .map((s) => ({ label: s.label, price: s.price })),
     });
     setEditingId(p._id);
     setShowForm(true);
@@ -66,19 +75,50 @@ export default function AdminProducts() {
     }));
   };
 
+  // ---- Sizes management — fixed set of 3 checkboxes, price shown once checked ----
+  const isSizeChecked = (label) => form.sizes.some((s) => s.label === label);
+  const getSizePrice = (label) => form.sizes.find((s) => s.label === label)?.price ?? "";
+
+  const toggleSize = (label) => {
+    setForm((prev) => {
+      const exists = prev.sizes.some((s) => s.label === label);
+      return {
+        ...prev,
+        sizes: exists
+          ? prev.sizes.filter((s) => s.label !== label)
+          : [...prev.sizes, { label, price: "" }],
+      };
+    });
+  };
+
+  const setSizePrice = (label, price) => {
+    setForm((prev) => ({
+      ...prev,
+      sizes: prev.sizes.map((s) => (s.label === label ? { ...s, price } : s)),
+    }));
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    if (file.size > 5 * 1024 * 1024) {
+      alert(`This file is ${sizeMB}MB — the limit is 5MB. Please pick a smaller image.`);
+      e.target.value = "";
+      return;
+    }
+
     setUploading(true);
     const data = new FormData();
     data.append("image", file);
     try {
       const res = await fetch("/api/upload/admin", { method: "POST", body: data });
-      if (!res.ok) throw new Error();
-      const result = await res.json();
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(result.error || `Server responded with status ${res.status}`);
       setForm((prev) => ({ ...prev, image: result.url }));
-    } catch {
-      alert("Image upload failed. Check the file is an image under 5MB.");
+    } catch (err) {
+      alert(`Image upload failed: ${err.message}\n\nFile: ${file.name} (${sizeMB}MB, ${file.type || "unknown type"})`);
     } finally {
       setUploading(false);
     }
@@ -92,6 +132,11 @@ export default function AdminProducts() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+
+    const cleanSizes = form.sizes
+      .filter((s) => s.price !== "" && s.price !== null)
+      .map((s) => ({ label: s.label, price: Number(s.price) }));
+
     const payload = {
       name: form.name, slug: form.slug, brand: form.brand, category: form.category,
       gender: form.gender, price: Number(form.price), oldPrice: form.oldPrice ? Number(form.oldPrice) : null,
@@ -100,6 +145,7 @@ export default function AdminProducts() {
       notes: { top: form.topNotes, middle: form.middleNotes, base: form.baseNotes },
       featured: form.featured, newArrival: form.newArrival, bestSeller: form.bestSeller,
       stock: Number(form.stock), collections: form.collections,
+      sizes: cleanSizes,
     };
 
     try {
@@ -180,12 +226,13 @@ export default function AdminProducts() {
               </div>
             </div>
             <div className="grid grid-cols-4 gap-4">
-              <div><label className={labelClass}>Price (Rs)</label><input type="number" name="price" value={form.price} onChange={handleChange} required className={inputClass} /></div>
+              <div><label className={labelClass}>Base Price (Rs)</label><input type="number" name="price" value={form.price} onChange={handleChange} required className={inputClass} /></div>
               <div><label className={labelClass}>Old Price</label><input type="number" name="oldPrice" value={form.oldPrice} onChange={handleChange} className={inputClass} /></div>
               <div><label className={labelClass}>Badge</label><input name="badge" value={form.badge} onChange={handleChange} placeholder="New / Sale / Best Seller" className={inputClass} /></div>
               <div><label className={labelClass}>Stock</label><input type="number" name="stock" value={form.stock} onChange={handleChange} className={inputClass} /></div>
             </div>
             <div><label className={labelClass}>Tags (comma separated: new, bestseller, popular)</label><input name="tags" value={form.tags} onChange={handleChange} className={inputClass} /></div>
+
             <div>
               <label className={labelClass}>Product Image</label>
               <div className="flex items-center gap-4 mb-2">
@@ -209,12 +256,49 @@ export default function AdminProducts() {
                 className={inputClass}
               />
             </div>
+
             <div><label className={labelClass}>Description</label><textarea name="description" value={form.description} onChange={handleChange} rows={3} className={inputClass} /></div>
             <div className="grid grid-cols-3 gap-4">
               <div><label className={labelClass}>Top Notes</label><input name="topNotes" value={form.topNotes} onChange={handleChange} className={inputClass} /></div>
               <div><label className={labelClass}>Middle Notes</label><input name="middleNotes" value={form.middleNotes} onChange={handleChange} className={inputClass} /></div>
               <div><label className={labelClass}>Base Notes</label><input name="baseNotes" value={form.baseNotes} onChange={handleChange} className={inputClass} /></div>
             </div>
+
+            {/* Sizes — fixed set of 3, pick which ones this product offers */}
+            <div>
+              <label className={labelClass}>Sizes &amp; Prices</label>
+              <p className="text-xs text-muted mb-3">
+                Check which sizes this product comes in, then set the price for each. Unchecked sizes won't show on the product page.
+              </p>
+              <div className="space-y-3">
+                {STANDARD_SIZES.map((label) => {
+                  const checked = isSizeChecked(label);
+                  return (
+                    <div key={label} className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 text-sm text-muted w-44 flex-shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleSize(label)}
+                          className="accent-gold"
+                        />
+                        {label}
+                      </label>
+                      {checked && (
+                        <input
+                          type="number"
+                          value={getSizePrice(label)}
+                          onChange={(e) => setSizePrice(label, e.target.value)}
+                          placeholder="Price (Rs)"
+                          className="bg-ink border border-line px-3.5 py-2.5 text-sm text-warm outline-none focus:border-gold w-40"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             <div>
               <label className={labelClass}>Collections</label>
               <div className="flex flex-wrap gap-4">
@@ -231,6 +315,7 @@ export default function AdminProducts() {
                 ))}
               </div>
             </div>
+
             <div className="flex gap-6">
               <label className="flex items-center gap-2 text-sm text-muted"><input type="checkbox" name="featured" checked={form.featured} onChange={handleChange} className="accent-gold" /> Featured</label>
               <label className="flex items-center gap-2 text-sm text-muted"><input type="checkbox" name="newArrival" checked={form.newArrival} onChange={handleChange} className="accent-gold" /> New Arrival</label>
