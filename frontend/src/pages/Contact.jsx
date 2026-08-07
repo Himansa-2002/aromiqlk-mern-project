@@ -12,7 +12,8 @@ export default function Contact() {
     e.preventDefault();
     setStatus("sending");
     try {
-      const res = await fetch("/api/contact", {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+      const res = await fetch(`${baseUrl}/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -117,9 +118,18 @@ export default function Contact() {
 
         </div>
 
-        <div className="max-w-6xl mx-auto px-8">
-          <div className="aspect-[16/7] border border-line bg-panel flex items-center justify-center text-muted text-sm mt-16">
-            Google Map embed goes here (once a showroom/office address is confirmed)
+        <div className="max-w-6xl mx-auto px-8 relative mt-16">
+          <div className="aspect-[16/7] border border-line bg-panel relative overflow-hidden">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126743.58585973715!2d79.773803!3d6.9218386!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae253d10f7a7003%3A0x320b2e4d32d3838d!2sColombo%2C%20Sri%20Lanka!5e0!3m2!1sen!2sus!4v1714421151608!5m2!1sen!2sus"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="absolute inset-0 grayscale contrast-125 opacity-70 hover:opacity-100 hover:grayscale-0 transition duration-500"
+            ></iframe>
           </div>
         </div>
       </section>

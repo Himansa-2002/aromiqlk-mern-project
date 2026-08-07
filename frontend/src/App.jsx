@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import Header from "./components/Header.jsx";
 import Footer from "./components/Footer.jsx";
 import CartDrawer from "./components/cart/CartDrawer.jsx";
+import FloatingWhatsApp from "./components/FloatingWhatsApp.jsx";
 import { CartProvider } from "./context/CartContext.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ProtectedRoute, AdminRoute } from "./components/auth/ProtectedRoutes.jsx";
@@ -76,6 +77,7 @@ function SiteLayout() {
 
       <Footer />
       <CartDrawer />
+      <FloatingWhatsApp />
     </div>
   );
 }

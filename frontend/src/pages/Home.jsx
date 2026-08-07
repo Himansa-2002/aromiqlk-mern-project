@@ -58,17 +58,17 @@ export default function Home() {
     fetch("/api/categories")
       .then((r) => (r.ok ? r.json() : []))
       .then(setCategories)
-      .catch(() => {});
+      .catch(() => { });
 
     fetch("/api/brands")
       .then((r) => (r.ok ? r.json() : []))
       .then(setBrands)
-      .catch(() => {});
+      .catch(() => { });
 
     fetch("/api/banners")
       .then((r) => (r.ok ? r.json() : []))
       .then(setBanners)
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const visibleProducts = tab === "new" ? homeData.newArrivals : homeData.bestSellers;
@@ -189,7 +189,6 @@ export default function Home() {
                   </div>
                 </Link>
               ))}
-              ))}
             </div>
           )}
         </div>
@@ -263,9 +262,8 @@ export default function Home() {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`text-xs uppercase tracking-widest pb-2.5 border-b transition-colors ${
-                  tab === t ? "text-gold-bright border-gold" : "text-muted border-transparent"
-                }`}
+                className={`text-xs uppercase tracking-widest pb-2.5 border-b transition-colors ${tab === t ? "text-gold-bright border-gold" : "text-muted border-transparent"
+                  }`}
               >
                 {t === "new" ? "New Arrivals" : "Best Sellers"}
               </button>
@@ -367,14 +365,25 @@ export default function Home() {
           <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Follow the Fragrance</h2>
         </div>
         <div className="grid grid-cols-3 md:grid-cols-6 gap-1">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {[
+            "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=600&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1595514535316-2495afc0ee06?q=80&w=600&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=600&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1615397323608-f40eaef04135?q=80&w=600&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=600&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?q=80&w=600&h=600&fit=crop",
+          ].map((src, i) => (
             <a
               key={i}
+              href="https://instagram.com/aromiq.lk"
               target="_blank"
               rel="noreferrer"
-              className="aspect-square bg-gradient-to-br from-gold/15 to-panel2 flex items-center justify-center hover:opacity-90"
+              className="aspect-square bg-panel relative group overflow-hidden"
             >
-              <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6 text-gold opacity-70"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" /></svg>
+              <img src={src} alt={`Instagram ${i}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-80 group-hover:opacity-100" />
+              <div className="absolute inset-0 bg-ink/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-white"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" /></svg>
+              </div>
             </a>
           ))}
         </div>
@@ -394,7 +403,8 @@ function NewsletterSection() {
     e.preventDefault();
     setStatus("sending");
     try {
-      const res = await fetch("/api/newsletter", {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+      const res = await fetch(`${baseUrl}/newsletter/subscribe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
