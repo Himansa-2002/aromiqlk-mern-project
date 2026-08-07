@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
+import HeroSlideshow from "../components/HeroSlideshow.jsx";
 
 const collectionIcons = {
   "Men's Collection": "bottle",
@@ -106,17 +107,7 @@ export default function Home() {
             </div>
           </div>
 
-          <figure className="relative aspect-[3/4] border border-line rounded bg-gradient-to-br from-gold/15 to-panel flex items-center justify-center">
-            <svg viewBox="0 0 120 160" fill="none" className="w-[46%] opacity-90">
-              <path d="M46 18h28l10 13-10 10H46l-10-10 10-13Z" stroke="#c9a961" strokeWidth="1.4" />
-              <rect x="34" y="42" width="52" height="98" rx="10" stroke="#c9a961" strokeWidth="1.4" />
-              <path d="M34 84c17 9 35 9 52 0" stroke="#c9a961" strokeWidth="1.1" />
-            </svg>
-            <figcaption className="absolute bottom-5 left-5 right-5 flex justify-between text-[11px] uppercase tracking-wider text-muted border-t border-line pt-3.5">
-              <span>Est. Sri Lanka</span>
-              <span>100% Authentic</span>
-            </figcaption>
-          </figure>
+          <HeroSlideshow />
         </div>
       </section>
 
@@ -179,16 +170,25 @@ export default function Home() {
                 <Link
                   to={`/collection/${c.slug}`}
                   key={c._id}
-                  className="relative aspect-[4/5] border border-line bg-gradient-to-br from-panel2 to-panel hover:border-gold transition-colors flex items-end p-6"
+                  className="group relative aspect-[4/5] border border-line hover:border-gold transition-colors flex items-end p-6 overflow-hidden"
+                  style={c.image ? {
+                    backgroundImage: `url(${c.image})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  } : undefined}
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className="absolute top-6 right-6 w-8 h-8 text-gold opacity-55">
+                  {!c.image && <div className="absolute inset-0 bg-gradient-to-br from-panel2 to-panel" />}
+                  {c.image && <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/50 to-transparent group-hover:via-ink/30 transition-all" />}
+
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className="absolute top-6 right-6 w-8 h-8 text-gold opacity-70 z-10">
                     {icons[collectionIcons[c.name]] || icons.bottle}
                   </svg>
-                  <div>
-                    <h3 className="font-display text-2xl mb-1.5">{c.name}</h3>
+                  <div className="relative z-10">
+                    <h3 className="font-display text-2xl mb-1.5 text-warm">{c.name}</h3>
                     {c.description && <span className="text-xs uppercase tracking-wider text-gold">{c.description}</span>}
                   </div>
                 </Link>
+              ))}
               ))}
             </div>
           )}
@@ -370,7 +370,6 @@ export default function Home() {
           {Array.from({ length: 6 }).map((_, i) => (
             <a
               key={i}
-              href="https://instagram.com/aromiq.lk"
               target="_blank"
               rel="noreferrer"
               className="aspect-square bg-gradient-to-br from-gold/15 to-panel2 flex items-center justify-center hover:opacity-90"

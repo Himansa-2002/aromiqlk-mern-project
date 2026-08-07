@@ -4,7 +4,7 @@ const STANDARD_SIZES = ["5ml Decant", "10ml Decant", "Full Bottle 100ml"];
 
 const emptyForm = {
   name: "", slug: "", brand: "", category: "", gender: "Men's",
-  price: "", oldPrice: "", badge: "", tags: "", image: "",
+  price: "", oldPrice: "", badge: "", tags: "", mainImage: "", galleryImages: [],
   description: "", topNotes: "", middleNotes: "", baseNotes: "",
   featured: false, newArrival: false, bestSeller: false, stock: 50,
   collections: [], sizes: [],
@@ -44,12 +44,13 @@ export default function AdminProducts() {
   };
 
   const openEdit = (p) => {
+    const productImages = (p.images?.length ? p.images : p.image ? [p.image] : []).filter(Boolean);
     setForm({
       name: p.name, slug: p.slug,
       brand: typeof p.brand === "object" ? p.brand._id : p.brand,
       category: typeof p.category === "object" ? p.category._id : p.category,
       gender: p.gender, price: p.price, oldPrice: p.oldPrice || "",
-      badge: p.badge || "", tags: (p.tags || []).join(", "), image: (p.images && p.images[0]) || "",
+      badge: p.badge || "", tags: (p.tags || []).join(", "), mainImage: productImages[0] || "", galleryImages: productImages.slice(1),
       description: p.description || "",
       topNotes: p.notes?.top || "", middleNotes: p.notes?.middle || "", baseNotes: p.notes?.base || "",
       featured: p.featured, newArrival: p.newArrival, bestSeller: p.bestSeller, stock: p.stock ?? 50,
@@ -98,7 +99,7 @@ export default function AdminProducts() {
     }));
   };
 
-  const handleImageUpload = async (e) => {
+  const handleImageUpload = async (e, imageType) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -116,7 +117,10 @@ export default function AdminProducts() {
       const res = await fetch("/api/upload/admin", { method: "POST", body: data });
       const result = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(result.error || `Server responded with status ${res.status}`);
-      setForm((prev) => ({ ...prev, image: result.url }));
+      setForm((prev) => imageType === "main"
+        ? { ...prev, mainImage: result.url }
+        : { ...prev, galleryImages: [...prev.galleryImages, result.url] }
+      );
     } catch (err) {
       alert(`Image upload failed: ${err.message}\n\nFile: ${file.name} (${sizeMB}MB, ${file.type || "unknown type"})`);
     } finally {
@@ -127,6 +131,13 @@ export default function AdminProducts() {
   const handleChange = (e) => {
     const { name, type, value, checked } = e.target;
     setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  };
+
+  const removeGalleryImage = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      galleryImages: prev.galleryImages.filter((_, imageIndex) => imageIndex !== index),
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -141,7 +152,7 @@ export default function AdminProducts() {
       name: form.name, slug: form.slug, brand: form.brand, category: form.category,
       gender: form.gender, price: Number(form.price), oldPrice: form.oldPrice ? Number(form.oldPrice) : null,
       badge: form.badge || null, tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-      image: form.image, images: form.image ? [form.image] : [], description: form.description,
+      images: [form.mainImage, ...form.galleryImages].filter(Boolean), description: form.description,
       notes: { top: form.topNotes, middle: form.middleNotes, base: form.baseNotes },
       featured: form.featured, newArrival: form.newArrival, bestSeller: form.bestSeller,
       stock: Number(form.stock), collections: form.collections,
@@ -233,28 +244,45 @@ export default function AdminProducts() {
             </div>
             <div><label className={labelClass}>Tags (comma separated: new, bestseller, popular)</label><input name="tags" value={form.tags} onChange={handleChange} className={inputClass} /></div>
 
-            <div>
-              <label className={labelClass}>Product Image</label>
-              <div className="flex items-center gap-4 mb-2">
-                {form.image && (
-                  <img src={form.image} alt="Preview" className="w-16 h-16 object-cover border border-line" />
-                )}
-                <div className="flex-1">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className={labelClass}>Main Product Image</label>
+                <p className="text-xs text-muted mb-2">This is the primary image on product cards and opens first on the product page.</p>
+                <div className="flex items-center gap-4 mb-2">
+                  {form.mainImage && <img src={form.mainImage} alt="Main product preview" className="w-16 h-16 object-cover border border-gold" />}
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handleImageUpload}
+                    onChange={(e) => handleImageUpload(e, "main")}
                     disabled={uploading}
                     className="text-sm text-muted file:mr-4 file:px-4 file:py-2 file:border-0 file:text-xs file:uppercase file:tracking-widest file:bg-gold file:text-ink file:cursor-pointer cursor-pointer"
                   />
-                  {uploading && <p className="text-xs text-gold mt-1">Uploading...</p>}
                 </div>
+                <input name="mainImage" value={form.mainImage} onChange={handleChange} placeholder="Or paste the main image URL" className={inputClass} />
               </div>
-              <input
-                name="image" value={form.image} onChange={handleChange}
-                placeholder="Or paste an image URL directly"
-                className={inputClass}
-              />
+
+              <div>
+                <label className={labelClass}>Additional Gallery Images</label>
+                <p className="text-xs text-muted mb-2">These appear as clickable thumbnails below the main image. Add one image at a time.</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e, "gallery")}
+                  disabled={uploading}
+                  className="text-sm text-muted file:mr-4 file:px-4 file:py-2 file:border-0 file:text-xs file:uppercase file:tracking-widest file:bg-gold file:text-ink file:cursor-pointer cursor-pointer"
+                />
+                {uploading && <p className="text-xs text-gold mt-2">Uploading...</p>}
+                {form.galleryImages.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {form.galleryImages.map((image, index) => (
+                      <div key={`${image}-${index}`} className="relative">
+                        <img src={image} alt={`Gallery image ${index + 1}`} className="w-16 h-16 object-cover border border-line" />
+                        <button type="button" onClick={() => removeGalleryImage(index)} className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-ink border border-gold text-gold text-xs" aria-label={`Remove gallery image ${index + 1}`}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div><label className={labelClass}>Description</label><textarea name="description" value={form.description} onChange={handleChange} rows={3} className={inputClass} /></div>
