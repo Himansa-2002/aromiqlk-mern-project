@@ -53,7 +53,7 @@ export default function ProfilePage() {
 
     useEffect(() => {
         const loadProfile = async () => {
-            const token = localStorage.getItem("token");
+            const token = sessionStorage.getItem("token");
 
             if (!token) {
                 navigate("/login", {
@@ -91,8 +91,8 @@ export default function ProfilePage() {
                 syncUserToLocalStorage(profile);
             } catch (error) {
                 if (error.status === 401) {
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("user");
+                    sessionStorage.removeItem("token");
+                    sessionStorage.removeItem("user");
 
                     navigate("/login", {
                         replace: true,
@@ -118,7 +118,7 @@ export default function ProfilePage() {
     const syncUserToLocalStorage = (updatedUser) => {
         try {
             const storedUser = JSON.parse(
-                localStorage.getItem("user") || "{}"
+                sessionStorage.getItem("user") || "{}"
             );
 
             localStorage.setItem(
@@ -240,8 +240,8 @@ export default function ProfilePage() {
             );
         } catch (error) {
             if (error.status === 401) {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("user");
 
                 navigate("/login", {
                     replace: true,

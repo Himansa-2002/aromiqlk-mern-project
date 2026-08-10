@@ -52,8 +52,8 @@ export default function WishlistPage() {
                 requestError?.status === 401 ||
                 requestError?.status === 403
             ) {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("user");
 
                 navigate("/login", {
                     replace: true,
@@ -73,7 +73,7 @@ export default function WishlistPage() {
     );
 
     const loadWishlist = useCallback(async () => {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
 
         if (!token) {
             navigate("/login", {

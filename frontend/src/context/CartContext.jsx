@@ -82,7 +82,7 @@ export function CartProvider({ children }) {
   }, []);
 
   const refreshCart = useCallback(async ({ silent = false } = {}) => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       resetCart();
@@ -106,7 +106,7 @@ export function CartProvider({ children }) {
   const openCart = useCallback(async () => {
     setIsCartOpen(true);
 
-    if (localStorage.getItem("token")) {
+    if (sessionStorage.getItem("token")) {
       try {
         await refreshCart({ silent: true });
       } catch {
@@ -123,7 +123,7 @@ export function CartProvider({ children }) {
     async ({ productId, selectedSize, quantity = 1 }, options = {}) => {
       const { openDrawer = true } = options;
 
-      if (!localStorage.getItem("token")) {
+      if (!sessionStorage.getItem("token")) {
         const authError = new Error("Please sign in before adding items to the cart.");
         authError.status = 401;
         throw authError;
@@ -231,7 +231,7 @@ export function CartProvider({ children }) {
   }, [applyCart]);
 
   useEffect(() => {
-    if (localStorage.getItem("token")) {
+    if (sessionStorage.getItem("token")) {
       refreshCart({ silent: true }).catch(() => { });
     }
   }, [refreshCart]);

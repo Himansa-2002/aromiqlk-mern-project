@@ -2,7 +2,7 @@ const API_BASE_URL = (
     import.meta.env.VITE_API_BASE_URL || "/api"
 ).replace(/\/$/, "");
 
-const getToken = () => localStorage.getItem("token");
+const getToken = () => sessionStorage.getItem("token");
 
 const request = async (endpoint, options = {}) => {
     const token = getToken();

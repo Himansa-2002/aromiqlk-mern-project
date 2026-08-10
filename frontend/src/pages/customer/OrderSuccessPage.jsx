@@ -54,7 +54,7 @@ export default function OrderSuccessPage() {
     if (
       !orderNumber ||
       stateOrder ||
-      !localStorage.getItem("token")
+      !sessionStorage.getItem("token")
     ) {
       setLoading(false);
       return;

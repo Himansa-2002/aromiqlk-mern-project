@@ -87,7 +87,7 @@ export default function ProductDetails() {
       return;
     }
 
-    if (!localStorage.getItem("token")) {
+    if (!sessionStorage.getItem("token")) {
       navigate("/login");
       return;
     }
@@ -119,7 +119,7 @@ export default function ProductDetails() {
 
     if (!product || addingToCart) return;
 
-    if (!localStorage.getItem("token")) {
+    if (!sessionStorage.getItem("token")) {
       navigate("/login");
       return;
     }

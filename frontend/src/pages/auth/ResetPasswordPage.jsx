@@ -30,10 +30,10 @@ export default function ResetPasswordPage() {
 
         try {
             const baseUrl = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
-            const res = await fetch(`${baseUrl}/auth/reset-password/${token}`, {
+            const res = await fetch(`${baseUrl}/auth/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password }),
+                body: JSON.stringify({ token, password, confirmPassword }),
             });
 
             const data = await res.json();

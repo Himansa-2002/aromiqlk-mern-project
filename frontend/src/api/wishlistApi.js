@@ -3,7 +3,7 @@ const API_BASE_URL = (
 ).replace(/\/$/, "");
 
 const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     return {
         "Content-Type": "application/json",
