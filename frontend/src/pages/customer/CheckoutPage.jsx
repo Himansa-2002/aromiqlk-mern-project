@@ -4,6 +4,7 @@ import { useCart } from "../../context/CartContext.jsx";
 import { getCheckoutSummary } from "../../api/checkoutApi.js";
 import { getUserAddresses } from "../../api/userApi.js";
 import { createOrder } from "../../api/orderApi.js";
+import { createOnePayTransactionApi } from "../../api/paymentApi.js";
 
 const formatPrice = (value) =>
     `Rs ${Number(value || 0).toLocaleString("en-LK", {
@@ -134,6 +135,14 @@ export default function CheckoutPage() {
 
             // If order successful, clear cart context
             clearCart();
+
+            if (paymentMethod === "onepay") {
+                const onepayRes = await createOnePayTransactionApi(orderRes.order._id || orderRes.order.id);
+                if (onepayRes.onePayUrl) {
+                    window.location.href = onepayRes.onePayUrl;
+                    return; // Prevent navigating away
+                }
+            }
 
             if (orderRes.payhereConfig) {
                 // Intercept and send to PayHere Sandbox
@@ -321,6 +330,28 @@ export default function CheckoutPage() {
                                         </div>
                                         <p className="mt-1.5 text-xs text-muted leading-relaxed">
                                             Securely pay online. (Payment gateway integration pending).
+                                        </p>
+                                    </div>
+                                </label>
+
+                                <label
+                                    className={`flex cursor-pointer items-start gap-4 border p-5 transition ${paymentMethod === "onepay" ? "border-gold bg-gold/5" : "border-line bg-ink"
+                                        }`}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="onepay"
+                                        checked={paymentMethod === "onepay"}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                        className="mt-1 w-4 h-4 accent-[#c9a961]"
+                                    />
+                                    <div className="w-full">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-sm font-medium text-warm tracking-wide">OnePay</p>
+                                        </div>
+                                        <p className="mt-1.5 text-xs text-muted leading-relaxed">
+                                            Trusted, secure payment powered by OnePay Sandbox.
                                         </p>
                                     </div>
                                 </label>

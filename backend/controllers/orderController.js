@@ -162,7 +162,7 @@ export const createOrder = async (req, res, next) => {
       throw new Error("Invalid delivery address ID");
     }
 
-    const allowedPaymentMethods = ["cash_on_delivery", "card", "bank_transfer"];
+    const allowedPaymentMethods = ["cash_on_delivery", "card", "bank_transfer", "onepay"];
 
     if (!paymentMethod || !allowedPaymentMethods.includes(paymentMethod)) {
       res.status(400);

@@ -25,6 +25,7 @@ import Checkout from "./pages/customer/CheckoutPage.jsx";
 import OrderSuccess from "./pages/customer/OrderSuccessPage.jsx";
 import Orders from "./pages/customer/OrdersPage.jsx";
 import OrderDetails from "./pages/customer/OrderDetailsPage.jsx";
+import OnePayResultPage from "./pages/customer/OnePayResultPage.jsx";
 import AdminOrdersPage from "./admin/pages/AdminOrdersPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 
@@ -68,6 +69,7 @@ function SiteLayout() {
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/order-details/:orderNumber" element={<OrderDetails />} />
+          <Route path="/onepay-result" element={<OnePayResultPage />} />
         </Route>
 
         <Route path="/category/:slug" element={<CategoryPage />} />
