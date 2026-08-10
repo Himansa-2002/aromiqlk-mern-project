@@ -13,6 +13,7 @@ import {
   decreaseOrderInventory,
   restoreOrderInventory,
 } from "../services/inventoryService.js";
+import crypto from "crypto";
 
 const allowedVerificationStatuses = ["paid", "failed", "cancelled"];
 
@@ -238,6 +239,55 @@ export const paymentWebhook = async (req, res, next) => {
   try {
     const { provider } = req.params;
 
+    // --- PAYHERE SPECIFIC LOGIC ---
+    if (provider === "payhere") {
+      const {
+        merchant_id,
+        order_id,
+        payment_id,
+        payhere_amount,
+        payhere_currency,
+        status_code,
+        md5sig,
+      } = req.body;
+
+      // Verify Cryptographic Hash from PayHere Server
+      const merchantSecret = process.env.PAYHERE_SECRET || "xyz_sandbox_secret";
+      const hashedSecret = crypto.createHash('md5').update(merchantSecret).digest('hex').toUpperCase();
+      const verificationString = merchant_id + order_id + payhere_amount + payhere_currency + status_code + hashedSecret;
+      const localMd5sig = crypto.createHash('md5').update(verificationString).digest('hex').toUpperCase();
+
+      if (localMd5sig !== md5sig) {
+        res.status(401);
+        throw new Error("Invalid cryptographic signature in PayHere webhook. Tampering detected.");
+      }
+
+      const order = await Order.findOne({ orderNumber: order_id });
+      if (!order) {
+        res.status(404);
+        throw new Error("Order matched with PayHere Webhook not found");
+      }
+
+      let normalizedStatus = "pending";
+      if (status_code == 2) normalizedStatus = "paid";
+      else if (status_code == -1 || status_code == -2) normalizedStatus = "failed";
+      else if (status_code == -3) normalizedStatus = "cancelled";
+
+      await updateOrderPaymentStatus(order, normalizedStatus);
+
+      // Decrement logic if strictly paid
+      if (normalizedStatus === 'paid' && order.inventoryStatus === 'pending') {
+        await decreaseOrderInventory({ order, performedBy: null });
+      }
+
+      if (['cancelled', 'failed'].includes(normalizedStatus) && order.inventoryStatus === 'decreased') {
+        await restoreOrderInventory({ order, performedBy: null });
+      }
+
+      return res.status(200).send("Webhook Received & Verified");
+    }
+    // --- END PAYHERE SPECIFIC LOGIC ---
+
     const {
       transactionId,
       providerReference = "",
@@ -313,26 +363,26 @@ export const paymentWebhook = async (req, res, next) => {
     }
 
     if (
-  normalizedStatus === 'paid' &&
-  order.inventoryStatus === 'pending'
-) {
-  await decreaseOrderInventory({
-    order,
-    performedBy: null,
-  });
-}
+      normalizedStatus === 'paid' &&
+      order.inventoryStatus === 'pending'
+    ) {
+      await decreaseOrderInventory({
+        order,
+        performedBy: null,
+      });
+    }
 
-if (
-  ['cancelled', 'refunded'].includes(
-    normalizedStatus
-  ) &&
-  order.inventoryStatus === 'decreased'
-) {
-  await restoreOrderInventory({
-    order,
-    performedBy: null,
-  });
-}
+    if (
+      ['cancelled', 'refunded'].includes(
+        normalizedStatus
+      ) &&
+      order.inventoryStatus === 'decreased'
+    ) {
+      await restoreOrderInventory({
+        order,
+        performedBy: null,
+      });
+    }
     return res.status(200).json({
       success: true,
       message: "Payment webhook processed successfully",

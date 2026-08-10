@@ -63,6 +63,7 @@ function SiteLayout() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/address" element={<Address />} />
           <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/orders" element={<Orders />} />

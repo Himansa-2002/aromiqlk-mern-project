@@ -135,10 +135,28 @@ export default function CheckoutPage() {
             // If order successful, clear cart context
             clearCart();
 
-            navigate("/order-success", {
-                replace: true,
-                state: { order: orderRes.order, paymentMethod },
-            });
+            if (orderRes.payhereConfig) {
+                // Intercept and send to PayHere Sandbox
+                const form = document.createElement("form");
+                form.setAttribute("method", "POST");
+                form.setAttribute("action", "https://sandbox.payhere.lk/pay/checkout");
+
+                for (const key in orderRes.payhereConfig) {
+                    const hiddenField = document.createElement("input");
+                    hiddenField.setAttribute("type", "hidden");
+                    hiddenField.setAttribute("name", key);
+                    hiddenField.setAttribute("value", orderRes.payhereConfig[key]);
+                    form.appendChild(hiddenField);
+                }
+
+                document.body.appendChild(form);
+                form.submit();
+            } else {
+                navigate("/order-success", {
+                    replace: true,
+                    state: { order: orderRes.order, paymentMethod },
+                });
+            }
         } catch (err) {
             setFormError(err.message || "Unable to place the order.");
         } finally {
