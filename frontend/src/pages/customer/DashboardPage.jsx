@@ -63,7 +63,7 @@ export default function DashboardPage() {
     const [error, setError] = useState("");
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
 
         if (!token) {
             navigate("/login", {
@@ -93,8 +93,8 @@ export default function DashboardPage() {
                         addressCount: u.addresses?.length || 0,
                     }));
                 } else if (profileRes.reason?.status === 401) {
-                    localStorage.removeItem("token");
-                    localStorage.removeItem("user");
+                    sessionStorage.removeItem("token");
+                    sessionStorage.removeItem("user");
                     navigate("/login", {
                         replace: true,
                         state: { message: "Session expired. Please sign in again." },

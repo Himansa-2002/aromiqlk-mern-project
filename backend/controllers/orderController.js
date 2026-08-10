@@ -14,6 +14,7 @@ import {
 
 import { calculateShipping } from "../services/shippingService.js";
 import { emailService } from "../services/emailService.js";
+// Force restart
 
 const normalizeCouponCode = (code) => {
   if (typeof code !== "string") {
@@ -161,7 +162,7 @@ export const createOrder = async (req, res, next) => {
       throw new Error("Invalid delivery address ID");
     }
 
-    const allowedPaymentMethods = ["cash_on_delivery", "card", "bank_transfer"];
+    const allowedPaymentMethods = ["cash_on_delivery", "card", "bank_transfer", "onepay"];
 
     if (!paymentMethod || !allowedPaymentMethods.includes(paymentMethod)) {
       res.status(400);
@@ -349,7 +350,7 @@ export const createOrder = async (req, res, next) => {
     // Fire off order confirmation in the background
     emailService.sendOrderConfirmationEmail(user, order);
 
-    return res.status(201).json({
+    const responsePayload = {
       success: true,
       message: "Order placed successfully",
 
@@ -369,7 +370,39 @@ export const createOrder = async (req, res, next) => {
         placedAt: order.placedAt,
         createdAt: order.createdAt,
       },
-    });
+    };
+
+    // If Card Payment, Generate PayHere MD5 Hash Config
+    if (paymentMethod === "card") {
+      const merchantId = process.env.PAYHERE_MERCHANT_ID || "1210000"; // Dummy Sandbox ID
+      const merchantSecret = process.env.PAYHERE_SECRET || "xyz_sandbox_secret";
+      const amountFormatted = order.pricing.grandTotal.toFixed(2);
+
+      const hashedSecret = crypto.createHash('md5').update(merchantSecret).digest('hex').toUpperCase();
+      const hashString = merchantId + order.orderNumber + amountFormatted + "LKR" + hashedSecret;
+      const hash = crypto.createHash('md5').update(hashString).digest('hex').toUpperCase();
+
+      responsePayload.payhereConfig = {
+        merchant_id: merchantId,
+        return_url: `${process.env.CLIENT_URL || "http://localhost:5173"}/order-success`,
+        cancel_url: `${process.env.CLIENT_URL || "http://localhost:5173"}/checkout`,
+        notify_url: `${process.env.VITE_API_BASE_URL || "http://localhost:5000/api"}/payments/webhook/payhere`,
+        order_id: order.orderNumber,
+        items: "Aromiq Fragrance Order",
+        currency: "LKR",
+        amount: amountFormatted,
+        first_name: user.firstName || "Customer",
+        last_name: user.lastName || "",
+        email: user.email,
+        phone: user.phone || "0700000000",
+        address: order.deliveryAddress.street,
+        city: order.deliveryAddress.city,
+        country: "Sri Lanka",
+        hash: hash
+      };
+    }
+
+    return res.status(201).json(responsePayload);
   } catch (error) {
     return next(error);
   }

@@ -49,8 +49,8 @@ export default function AddressPage() {
 
     const handleAuthenticationError = (error) => {
         if (error?.status === 401 || error?.status === 403) {
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
+            sessionStorage.removeItem("token");
+            sessionStorage.removeItem("user");
 
             navigate("/login", {
                 replace: true,
@@ -68,7 +68,7 @@ export default function AddressPage() {
     };
 
     const loadAddresses = async () => {
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
 
         if (!token) {
             navigate("/login", {

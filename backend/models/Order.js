@@ -334,7 +334,7 @@ const orderSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
-      enum: ["cash_on_delivery", "card", "bank_transfer"],
+      enum: ["cash_on_delivery", "card", "bank_transfer", "onepay"],
       required: true,
     },
 
@@ -343,6 +343,16 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
       index: true,
+    },
+
+    onePayTransactionId: {
+      type: String,
+      default: null,
+    },
+
+    paidAt: {
+      type: Date,
+      default: null,
     },
 
     orderStatus: {
@@ -385,21 +395,21 @@ const orderSchema = new mongoose.Schema(
     },
 
     trackingCourier: {
-  type: String,
-  default: '',
-  trim: true,
-},
+      type: String,
+      default: '',
+      trim: true,
+    },
 
-trackingUrl: {
-  type: String,
-  default: '',
-  trim: true,
-},
+    trackingUrl: {
+      type: String,
+      default: '',
+      trim: true,
+    },
 
-estimatedDeliveryDate: {
-  type: Date,
-  default: null,
-},
+    estimatedDeliveryDate: {
+      type: Date,
+      default: null,
+    },
 
     placedAt: {
       type: Date,

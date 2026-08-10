@@ -33,7 +33,7 @@ const STATUS_TRANSITIONS = {
 
 /* ── helpers ─────────────────────────────────────────── */
 
-const getToken = () => localStorage.getItem("token");
+const getToken = () => sessionStorage.getItem("token");
 
 const request = async (path, options = {}) => {
     const token = getToken();
