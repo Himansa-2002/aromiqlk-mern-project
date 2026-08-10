@@ -418,6 +418,13 @@ export default function ProfilePage() {
 
                             <div className="pt-4 border-t border-line space-y-3">
                                 <Link
+                                    to="/wishlist"
+                                    className="block w-full text-center px-5 py-3 border border-line text-xs uppercase tracking-[0.18em] text-warm hover:border-gold hover:text-gold transition"
+                                >
+                                    My Wishlist
+                                </Link>
+
+                                <Link
                                     to="/address"
                                     className="block w-full text-center px-5 py-3 border border-line text-xs uppercase tracking-[0.18em] text-warm hover:border-gold hover:text-gold transition"
                                 >

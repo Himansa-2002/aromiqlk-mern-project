@@ -1,7 +1,9 @@
+import { useState } from "react";
 import {
   Link,
   useNavigate,
 } from "react-router-dom";
+import { addWishlistItem, removeWishlistItem } from "../api/wishlistApi.js";
 
 const formatPrice = (value) =>
   Number(value || 0).toLocaleString("en-LK", {
@@ -31,6 +33,17 @@ const ProductCard = ({
   onRemove,
 }) => {
   const navigate = useNavigate();
+  const [isAddingToWishlist, setIsAddingToWishlist] = useState(false);
+  const productIdStr = String(product._id || product.id || product);
+
+  const [isWishlisted, setIsWishlisted] = useState(() => {
+    try {
+      const items = JSON.parse(localStorage.getItem("wishlistItems") || "[]");
+      return items.includes(productIdStr);
+    } catch {
+      return false;
+    }
+  });
 
   if (!product) {
     return null;
@@ -99,6 +112,69 @@ const ProductCard = ({
 
   const handleDefaultCartClick = () => {
     navigate(productPath);
+  };
+
+  const handleToggleWishlist = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!sessionStorage.getItem("token")) {
+      navigate("/login", {
+        replace: true,
+        state: {
+          message: "Please sign in to manage your wishlist.",
+        },
+      });
+      return;
+    }
+
+    if (isAddingToWishlist) return;
+
+    try {
+      setIsAddingToWishlist(true);
+      const sizeToSave = selectedSize || (Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes[0].label : "");
+
+      if (isWishlisted) {
+        await removeWishlistItem(productIdStr, sizeToSave);
+        setIsWishlisted(false);
+
+        try {
+          const current = JSON.parse(localStorage.getItem("wishlistItems") || "[]");
+          const updated = current.filter(id => id !== productIdStr);
+          localStorage.setItem("wishlistItems", JSON.stringify(updated));
+        } catch (e) {
+          // ignore
+        }
+
+        alert("Removed from wishlist.");
+      } else {
+        await addWishlistItem({
+          productId: productIdStr,
+          selectedSize: sizeToSave,
+        });
+
+        setIsWishlisted(true);
+
+        try {
+          const current = JSON.parse(localStorage.getItem("wishlistItems") || "[]");
+          localStorage.setItem("wishlistItems", JSON.stringify([...new Set([...current, productIdStr])]));
+        } catch (e) {
+          // ignore
+        }
+
+        alert("Added to wishlist successfully!");
+      }
+    } catch (err) {
+      if (err.status === 401 || err.status === 403) {
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+        navigate("/login");
+        return;
+      }
+      alert(err.message || "Failed to update wishlist.");
+    } finally {
+      setIsAddingToWishlist(false);
+    }
   };
 
   return (
@@ -216,39 +292,21 @@ const ProductCard = ({
             {!wishlistMode && (
               <button
                 type="button"
-                aria-label="View product options"
-                onClick={
-                  handleDefaultCartClick
-                }
-                className="w-9 h-9 shrink-0 rounded-full border border-gold text-gold flex items-center justify-center hover:bg-gold hover:text-ink transition-colors"
+                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                onClick={handleToggleWishlist}
+                disabled={isAddingToWishlist}
+                className={`w-9 h-9 shrink-0 rounded-full border flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isWishlisted
+                  ? "border-gold bg-gold/20 text-gold-bright hover:bg-gold hover:text-ink"
+                  : "border-gold text-gold hover:bg-gold hover:text-ink"
+                  }`}
               >
                 <svg
                   width="15"
                   height="15"
                   viewBox="0 0 24 24"
-                  fill="none"
+                  fill={isWishlisted ? "currentColor" : "none"}
                 >
-                  <path
-                    d="M4 6h2l1.6 10.2A2 2 0 0 0 9.6 18h7.8a2 2 0 0 0 2-1.6L21 8H7"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-
-                  <circle
-                    cx="10"
-                    cy="21"
-                    r="1.3"
-                    fill="currentColor"
-                  />
-
-                  <circle
-                    cx="18"
-                    cy="21"
-                    r="1.3"
-                    fill="currentColor"
-                  />
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             )}
