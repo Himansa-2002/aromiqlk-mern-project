@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
 
 const brandOptions = ["Lattafa", "Armaf", "Afnan", "Al Haramain", "Rasasi"];
@@ -63,9 +63,29 @@ export default function Shop() {
       if (tags.length && !tags.some((t) => p.tags.includes(t))) return false;
       if (priceMin && p.price < parseFloat(priceMin)) return false;
       if (priceMax && p.price > parseFloat(priceMax)) return false;
-      if (search && !`${p.brand} ${p.name}`.toLowerCase().includes(search.toLowerCase())) return false;
+      
+      // Search
+     if (search) {
+        const query = search.toLowerCase().trim();
+
+        const searchableText = [
+          p.name,
+          p.brand,
+          p.category,
+          p.gender,
+          ...(p.tags || []),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        if (!searchableText.includes(query)) {
+          return false;
+        }
+      }
       return true;
     });
+
     if (sort === "price-asc") list = [...list].sort((a, b) => a.price - b.price);
     if (sort === "price-desc") list = [...list].sort((a, b) => b.price - a.price);
     if (sort === "new") list = [...list].sort((a, b) => b.tags.includes("new") - a.tags.includes("new"));

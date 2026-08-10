@@ -218,37 +218,49 @@ export default function Home() {
       )}
 
       {/* Shop by Brand */}
-      {brands.length > 0 && (
-        <section className="py-24">
-          <div className="max-w-6xl mx-auto px-8">
-            <div className="text-center max-w-lg mx-auto mb-12">
-              <span className="text-xs uppercase tracking-[0.3em] text-gold">The Houses We Carry</span>
-              <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Shop by Brand</h2>
-              <p className="text-muted text-sm mt-3">Authentic fragrances direct from the region's most respected perfume houses.</p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-5">
-              {brands.map((b) => (
-                <Link
-                  key={b._id}
-                  to={`/brand/${b.slug}`}
-                  className="group flex flex-col items-center gap-3.5 border border-line bg-panel py-8 px-4 hover:border-gold transition-colors"
-                >
-                  {b.logo ? (
-                    <img src={b.logo} alt={b.name} className="w-12 h-12 object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full border border-gold text-gold flex items-center justify-center font-display text-xl group-hover:bg-gold group-hover:text-ink transition-colors">
-                      {b.name.charAt(0)}
-                    </div>
-                  )}
-                  <span className="text-xs uppercase tracking-wider text-muted group-hover:text-gold-bright transition-colors text-center">
-                    {b.name}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+{brands.length > 0 && (
+  <section className="py-24">
+    <div className="max-w-6xl mx-auto px-8">
+      <div className="text-center max-w-lg mx-auto mb-12">
+        <span className="text-xs uppercase tracking-[0.3em] text-gold">
+          The Houses We Carry
+        </span>
+
+        <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">
+          Shop by Brand
+        </h2>
+
+        <p className="text-muted text-sm mt-3">
+          Authentic fragrances direct from the region's most respected perfume houses.
+        </p>
+      </div>
+
+     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
+        {brands.map((b) => (
+          <Link
+            key={b._id}
+            to={`/brand/${b.slug}`}
+            className="group aspect-square border border-line bg-panel hover:border-gold transition-colors overflow-hidden"
+          >
+            {b.logo ? (
+              <img
+                src={b.logo}
+                alt={b.name}
+                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full border border-gold text-gold flex items-center justify-center font-display text-3xl group-hover:bg-gold group-hover:text-ink transition-colors">
+                  {b.name.charAt(0)}
+                </div>
+              </div>
+            )}
+          </Link>
+        ))}
+      </div>
+    </div>
+  </section>
+)}
 
       {/* New Arrivals / Best Sellers */}
       <section className="py-24">

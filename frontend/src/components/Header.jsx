@@ -19,37 +19,39 @@ export default function Header() {
     logout(true);
   };
 
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+
+    if (searchQuery.trim()) {
+      navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-ink/90 backdrop-blur-md border-b border-line">
-      <div className="max-w-6xl mx-auto px-8 h-20 flex items-center justify-between">
-        <Link
-          to="/"
-          className="flex items-center gap-2 font-display text-2xl text-gold-bright"
-        >
-          <svg viewBox="0 0 40 40" fill="none" className="w-7 h-7">
-            <path
-              d="M16 6h8l3 4-3 3H16l-3-3 3-4Z"
-              stroke="currentColor"
-              strokeWidth="1.4"
-            />
-            <rect
-              x="13"
-              y="14"
-              width="14"
-              height="20"
-              rx="3"
-              stroke="currentColor"
-              strokeWidth="1.4"
-            />
-            <path
-              d="M13 22c3 2 8 2 14 0"
-              stroke="currentColor"
-              strokeWidth="1.2"
-            />
-          </svg>
+    <div className="max-w-6xl mx-auto px-8 h-20 flex items-center justify-between">
 
-          aromiq<span className="text-gold">.lk</span>
-        </Link>
+   <Link
+      to="/"
+      className="flex items-center gap-3"
+    >
+      <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center">
+        <img
+          src="/images/logo.png"
+          alt="Aromiq.lk"
+          className="w-[80px] h-[80px] max-w-none object-contain"
+        />
+      </div>
+
+      <span className="font-display text-2xl text-gold-bright tracking-wide">
+        aromiq<span className="text-gold">.lk</span>
+      </span>
+    </Link>
 
         <nav className="hidden md:flex gap-10">
           <NavLink to="/" end className={navClass}>
@@ -70,10 +72,24 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-4">
+        {searchOpen ? (
+        <form
+          onSubmit={handleSearch}
+          className="flex items-center border border-line bg-panel"
+        >
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search..."
+            autoFocus
+            className="w-48 h-9 px-3 bg-transparent text-sm text-white outline-none placeholder:text-muted"
+          />
+
           <button
-            type="button"
-            aria-label="Search"
-            className="w-9 h-9 flex items-center justify-center rounded-full border border-line text-gold hover:border-gold hover:text-gold-bright transition"
+            type="submit"
+            aria-label="Submit search"
+            className="w-9 h-9 flex items-center justify-center text-gold hover:text-gold-bright transition"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <circle
@@ -91,6 +107,44 @@ export default function Header() {
               />
             </svg>
           </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setSearchOpen(false);
+              setSearchQuery("");
+            }}
+            aria-label="Close search"
+            className="w-9 h-9 flex items-center justify-center text-muted hover:text-gold transition"
+          >
+            ×
+          </button>
+        </form>
+      ) : (
+        <button
+          type="button"
+          aria-label="Search"
+          onClick={() => setSearchOpen(true)}
+          className="w-9 h-9 flex items-center justify-center rounded-full border border-line text-gold hover:border-gold hover:text-gold-bright transition"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle
+              cx="11"
+              cy="11"
+              r="7"
+              stroke="currentColor"
+              strokeWidth="1.6"
+            />
+            <path
+              d="M21 21l-4.3-4.3"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+      )}
+
 
           <button
             type="button"
