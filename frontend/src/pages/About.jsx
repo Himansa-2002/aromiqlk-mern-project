@@ -36,12 +36,12 @@ export default function About() {
               craftsmanship you'd expect walking into a boutique in Dubai — delivered straight to your door.
             </p>
           </div>
-          <figure className="relative aspect-[4/5] border border-line rounded bg-gradient-to-br from-gold/15 to-panel flex items-center justify-center">
-            <svg viewBox="0 0 120 160" fill="none" className="w-[46%] opacity-90">
-              <path d="M46 18h28l10 13-10 10H46l-10-10 10-13Z" stroke="#c9a961" strokeWidth="1.4" />
-              <rect x="34" y="42" width="52" height="98" rx="10" stroke="#c9a961" strokeWidth="1.4" />
-              <path d="M34 84c17 9 35 9 52 0" stroke="#c9a961" strokeWidth="1.1" />
-            </svg>
+          <figure className="border border-line rounded overflow-hidden">
+            <img
+              src="/images/logo2.jpeg"
+              alt="Arabic perfume collection"
+              className="w-full h-auto block"
+            />
           </figure>
         </div>
       </section>
@@ -49,8 +49,12 @@ export default function About() {
       <section className="py-20">
         <div className="max-w-6xl mx-auto px-8 space-y-24">
           <div className="grid md:grid-cols-2 gap-14 items-center">
-            <div className="aspect-[4/3] border border-line bg-gradient-to-br from-gold/15 to-panel flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#c9a961" strokeWidth="1.2" className="w-16 h-16"><rect x="6" y="4" width="12" height="16" rx="2" /><path d="M9 4V2h6v2M9 10h6M9 14h4" /></svg>
+            <div className="border border-line rounded overflow-hidden">
+              <img
+                src="/images/collection.jpg"
+                alt="Arabic perfume collection"
+                className="w-full h-auto block"
+              />
             </div>
             <div>
               <span className="text-xs uppercase tracking-[0.3em] text-gold">Our Collection</span>
@@ -64,8 +68,12 @@ export default function About() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-14 items-center">
-            <div className="md:order-2 aspect-[4/3] border border-line bg-gradient-to-br from-gold/15 to-panel flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#c9a961" strokeWidth="1.2" className="w-16 h-16"><path d="M12 3s6 7 6 11a6 6 0 1 1-12 0c0-4 6-11 6-11Z" /></svg>
+            <div className="md:order-2 border border-line rounded overflow-hidden">
+              <img
+                src="/images/arabic-perfume.jpg"
+                alt="Arabic perfume"
+                className="w-full h-auto block"
+              />
             </div>
             <div className="md:order-1">
               <span className="text-xs uppercase tracking-[0.3em] text-gold">Why Arabic Perfumes</span>

@@ -1,10 +1,11 @@
-import { NavLink, Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { itemCount, openCart, resetCart } = useCart();
   const { isLoggedIn, logout } = useAuth();
 
@@ -22,6 +23,12 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  useEffect(() => {
+    if (location.pathname === "/shop") {
+      const q = new URLSearchParams(location.search).get("search") || "";
+      setSearchQuery(q);
+    }
+  }, [location.pathname, location.search]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -81,7 +88,7 @@ export default function Header() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search..."
+                placeholder="Search products, brands, categories..."
                 autoFocus
                 className="w-48 h-9 px-3 bg-transparent text-sm text-white outline-none placeholder:text-muted"
               />

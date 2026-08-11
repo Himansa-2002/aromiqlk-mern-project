@@ -38,6 +38,7 @@ export const getProducts = async (req, res) => {
       Product.find(filter)
         .populate('brand', 'name slug')
         .populate('category', 'name slug')
+        .populate('collections', 'name slug')
         .sort(sortOption)
         .skip(skip)
         .limit(limitNum),
