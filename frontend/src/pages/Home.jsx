@@ -372,31 +372,22 @@ export default function Home() {
 
       {/* Instagram Gallery */}
       <section className="pb-24">
-        <div className="max-w-6xl mx-auto px-8 mb-10 text-center max-w-lg mx-auto">
-          <span className="text-xs uppercase tracking-[0.3em] text-gold">@aromiq.lk</span>
-          <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Follow the Fragrance</h2>
+        <div className="max-w-6xl mx-auto px-8 mb-10 text-center">
+          <span className="text-xs uppercase tracking-[0.3em] text-gold">
+            Our Gallery
+          </span>
+
+          <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">
+            Follow the Fragrance
+          </h2>
         </div>
+
         <div className="grid grid-cols-3 md:grid-cols-6 gap-1">
-          {[
-            "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=600&h=600&fit=crop",
-            "https://images.unsplash.com/photo-1595514535316-2495afc0ee06?q=80&w=600&h=600&fit=crop",
-            "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=600&h=600&fit=crop",
-            "https://images.unsplash.com/photo-1615397323608-f40eaef04135?q=80&w=600&h=600&fit=crop",
-            "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=600&h=600&fit=crop",
-            "https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?q=80&w=600&h=600&fit=crop",
-          ].map((src, i) => (
-            <a
-              key={i}
-              href="https://instagram.com/aromiq.lk"
-              target="_blank"
-              rel="noreferrer"
-              className="aspect-square bg-panel relative group overflow-hidden"
-            >
-              <img src={src} alt={`Instagram ${i}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-80 group-hover:opacity-100" />
-              <div className="absolute inset-0 bg-ink/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-white"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" /></svg>
-              </div>
-            </a>
+          {[1, 2, 3, 4, 5, 6].map((item) => (
+            <div
+              key={item}
+              className="aspect-square bg-panel border border-line"
+            ></div>
           ))}
         </div>
       </section>
