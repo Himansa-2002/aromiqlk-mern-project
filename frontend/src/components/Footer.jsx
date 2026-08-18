@@ -32,11 +32,11 @@ export default function Footer() {
             <div>
               <h5 className="text-xs uppercase tracking-widest text-gold mb-5">Shop</h5>
               <ul className="space-y-3 text-sm text-muted">
-                <li><Link to="/shop" className="hover:text-gold-bright">Men's Collection</Link></li>
-                <li><Link to="/shop" className="hover:text-gold-bright">Women's Collection</Link></li>
-                <li><Link to="/shop" className="hover:text-gold-bright">Unisex Collection</Link></li>
-                <li><Link to="/shop" className="hover:text-gold-bright">Arabic Perfume Oils</Link></li>
-                <li><Link to="/shop" className="hover:text-gold-bright">Decants (5ml &amp; 10ml)</Link></li>
+                <li><Link to="/collection/mens-collection" className="hover:text-gold-bright">Men's Collection</Link></li>
+                <li><Link to="/collection/womens-collection" className="hover:text-gold-bright">Women's Collection</Link></li>
+                <li><Link to="/collection/unisex-collection" className="hover:text-gold-bright">Unisex Collection</Link></li>
+                <li><Link to="/collection/arabic-perfume-oils" className="hover:text-gold-bright">Arabic Perfume Oils</Link></li>
+                <li><Link to="/collection/decants" className="hover:text-gold-bright">Decants (5ml &amp; 10ml)</Link></li>
               </ul>
             </div>
 

@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard.jsx";
+import HeroSlideshow from "../components/HeroSlideshow.jsx";
 
-const collections = [
-  { name: "Men's Collection", tag: "24 Fragrances", icon: "bottle" },
-  { name: "Women's Collection", tag: "31 Fragrances", icon: "flower" },
-  { name: "Unisex Collection", tag: "15 Fragrances", icon: "infinity" },
-  { name: "Arabic Perfume Oils", tag: "Alcohol-Free", icon: "droplet" },
-  { name: "Luxury Gift Sets", tag: "Ready to Gift", icon: "gift" },
-  { name: "Decants (5ml & 10ml)", tag: "Try Before Full", icon: "vial" },
-];
+const collectionIcons = {
+  "Men's Collection": "bottle",
+  "Women's Collection": "flower",
+  "Unisex Collection": "infinity",
+  "Arabic Perfume Oils": "droplet",
+  "Luxury Gift Sets": "gift",
+  "Decants (5ml & 10ml)": "vial",
+};
 
 const icons = {
   bottle: <><rect x="7" y="8" width="10" height="13" rx="2" /><path d="M10 8V5h4v3" /></>,
@@ -19,13 +20,6 @@ const icons = {
   gift: <><rect x="4" y="9" width="16" height="11" rx="1" /><path d="M4 9h16M12 9v11M8 9c-2-3 0-5 2-5s2 3 2 5M16 9c2-3 0-5-2-5s-2 3-2 5" /></>,
   vial: <><rect x="9" y="4" width="6" height="16" rx="3" /><path d="M9 12h6" /></>,
 };
-
-const products = [
-  { brand: "Lattafa", name: "Khamrah Qahwa", price: 8900, rating: 5, badge: "New" },
-  { brand: "Armaf", name: "Club de Nuit Intense", price: 7200, oldPrice: 9500, rating: 5, badge: "Sale" },
-  { brand: "Afnan", name: "Supremacy Silver", price: 6500, rating: 4, badge: null },
-  { brand: "Al Haramain", name: "Amber Oud Gold", price: 11400, rating: 5, badge: "Best Seller" },
-];
 
 const whyUs = [
   ["100% Authentic", "Every bottle is sourced directly from authorised distributors — never diluted, never fake."],
@@ -44,6 +38,40 @@ const reviews = [
 
 export default function Home() {
   const [tab, setTab] = useState("new");
+  const [homeData, setHomeData] = useState({ featuredCollections: [], newArrivals: [], bestSellers: [] });
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [banners, setBanners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/home")
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load homepage data");
+        return r.json();
+      })
+      .then(setHomeData)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setCategories)
+      .catch(() => { });
+
+    fetch("/api/brands")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setBrands)
+      .catch(() => { });
+
+    fetch("/api/banners")
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setBanners)
+      .catch(() => { });
+  }, []);
+
+  const visibleProducts = tab === "new" ? homeData.newArrivals : homeData.bestSellers;
 
   return (
     <>
@@ -79,19 +107,41 @@ export default function Home() {
             </div>
           </div>
 
-          <figure className="relative aspect-[3/4] border border-line rounded bg-gradient-to-br from-gold/15 to-panel flex items-center justify-center">
-            <svg viewBox="0 0 120 160" fill="none" className="w-[46%] opacity-90">
-              <path d="M46 18h28l10 13-10 10H46l-10-10 10-13Z" stroke="#c9a961" strokeWidth="1.4" />
-              <rect x="34" y="42" width="52" height="98" rx="10" stroke="#c9a961" strokeWidth="1.4" />
-              <path d="M34 84c17 9 35 9 52 0" stroke="#c9a961" strokeWidth="1.1" />
-            </svg>
-            <figcaption className="absolute bottom-5 left-5 right-5 flex justify-between text-[11px] uppercase tracking-wider text-muted border-t border-line pt-3.5">
-              <span>Est. Sri Lanka</span>
-              <span>100% Authentic</span>
-            </figcaption>
-          </figure>
+          <HeroSlideshow />
         </div>
       </section>
+
+      {/* Promotional Banners — managed via /admin/banners, shows only Active ones */}
+      {banners.length > 0 && (
+        <section className="py-6">
+          <div className="max-w-6xl mx-auto px-8 space-y-4">
+            {banners.map((b) => (
+              <div
+                key={b._id}
+                className="relative overflow-hidden border border-line min-h-[180px] flex items-center bg-panel"
+                style={b.desktopImage ? {
+                  backgroundImage: `url(${b.desktopImage})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                } : undefined}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/70 to-transparent" />
+                <div className="relative z-10 px-10 py-8">
+                  <h3 className="font-display text-2xl md:text-3xl text-warm mb-4">{b.title}</h3>
+                  {b.ctaText && b.ctaLink && (
+                    <Link
+                      to={b.ctaLink}
+                      className="inline-block px-7 py-3.5 text-xs uppercase tracking-widest bg-gradient-to-br from-gold-bright to-gold-deep text-ink font-medium hover:brightness-110 transition"
+                    >
+                      {b.ctaText}
+                    </Link>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Featured Collections */}
       <section id="collections" className="py-24">
@@ -101,25 +151,116 @@ export default function Home() {
             <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Curated by Character</h2>
             <p className="text-muted text-sm mt-3">Six ways into the house of Aromiq — from bold oud oils to gift-ready sets.</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-            {collections.map((c) => (
-              <Link
-                to="/shop"
-                key={c.name}
-                className="relative aspect-[4/5] border border-line bg-gradient-to-br from-panel2 to-panel hover:border-gold transition-colors flex items-end p-6"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className="absolute top-6 right-6 w-8 h-8 text-gold opacity-55">
-                  {icons[c.icon]}
-                </svg>
-                <div>
-                  <h3 className="font-display text-2xl mb-1.5">{c.name}</h3>
-                  <span className="text-xs uppercase tracking-wider text-gold">{c.tag}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
+
+          {loading && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="aspect-[4/5] border border-line bg-panel animate-pulse" />
+              ))}
+            </div>
+          )}
+
+          {!loading && error && (
+            <p className="text-red-400 text-sm text-center py-8">Couldn't load collections — is the backend running? ({error})</p>
+          )}
+
+          {!loading && !error && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              {homeData.featuredCollections.map((c) => (
+                <Link
+                  to={`/collection/${c.slug}`}
+                  key={c._id}
+                  className="group relative aspect-[4/5] border border-line hover:border-gold transition-colors flex items-end p-6 overflow-hidden"
+                  style={c.image ? {
+                    backgroundImage: `url(${c.image})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  } : undefined}
+                >
+                  {!c.image && <div className="absolute inset-0 bg-gradient-to-br from-panel2 to-panel" />}
+                  {c.image && <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/50 to-transparent group-hover:via-ink/30 transition-all" />}
+
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className="absolute top-6 right-6 w-8 h-8 text-gold opacity-70 z-10">
+                    {icons[collectionIcons[c.name]] || icons.bottle}
+                  </svg>
+                  <div className="relative z-10">
+                    <h3 className="font-display text-2xl mb-1.5 text-warm">{c.name}</h3>
+                    {c.description && <span className="text-xs uppercase tracking-wider text-gold">{c.description}</span>}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
+
+      {/* Shop by Category */}
+      {categories.length > 0 && (
+        <section className="py-16 border-y border-line bg-panel">
+          <div className="max-w-6xl mx-auto px-8">
+            <div className="text-center max-w-lg mx-auto mb-10">
+              <span className="text-xs uppercase tracking-[0.3em] text-gold">Browse</span>
+              <h2 className="font-display font-semibold text-2xl md:text-3xl mt-3">Shop by Category</h2>
+            </div>
+            <div className="flex flex-wrap justify-center gap-4">
+              {categories.map((cat) => (
+                <Link
+                  key={cat._id}
+                  to={`/category/${cat.slug}`}
+                  className="px-7 py-3.5 text-xs uppercase tracking-widest border border-line text-muted hover:border-gold hover:text-gold-bright transition-colors"
+                >
+                  {cat.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Shop by Brand */}
+{brands.length > 0 && (
+  <section className="py-24">
+    <div className="max-w-6xl mx-auto px-8">
+      <div className="text-center max-w-lg mx-auto mb-12">
+        <span className="text-xs uppercase tracking-[0.3em] text-gold">
+          The Houses We Carry
+        </span>
+
+        <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">
+          Shop by Brand
+        </h2>
+
+        <p className="text-muted text-sm mt-3">
+          Authentic fragrances direct from the region's most respected perfume houses.
+        </p>
+      </div>
+
+     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-4xl mx-auto">
+        {brands.map((b) => (
+          <Link
+            key={b._id}
+            to={`/brand/${b.slug}`}
+            className="group aspect-square border border-line bg-panel hover:border-gold transition-colors overflow-hidden"
+          >
+            {b.logo ? (
+              <img
+                src={b.logo}
+                alt={b.name}
+                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="w-20 h-20 rounded-full border border-gold text-gold flex items-center justify-center font-display text-3xl group-hover:bg-gold group-hover:text-ink transition-colors">
+                  {b.name.charAt(0)}
+                </div>
+              </div>
+            )}
+          </Link>
+        ))}
+      </div>
+    </div>
+  </section>
+)}
 
       {/* New Arrivals / Best Sellers */}
       <section className="py-24">
@@ -133,17 +274,31 @@ export default function Home() {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`text-xs uppercase tracking-widest pb-2.5 border-b transition-colors ${
-                  tab === t ? "text-gold-bright border-gold" : "text-muted border-transparent"
-                }`}
+                className={`text-xs uppercase tracking-widest pb-2.5 border-b transition-colors ${tab === t ? "text-gold-bright border-gold" : "text-muted border-transparent"
+                  }`}
               >
                 {t === "new" ? "New Arrivals" : "Best Sellers"}
               </button>
             ))}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {products.map((p) => <ProductCard product={p} key={p.name} />)}
-          </div>
+
+          {loading && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="aspect-[1/1.6] border border-line bg-panel animate-pulse" />
+              ))}
+            </div>
+          )}
+
+          {!loading && !error && visibleProducts.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {visibleProducts.map((p) => <ProductCard product={p} key={p._id} />)}
+            </div>
+          )}
+
+          {!loading && !error && visibleProducts.length === 0 && (
+            <p className="text-muted text-sm text-center py-8">Nothing to show here yet.</p>
+          )}
         </div>
       </section>
 
@@ -222,37 +377,76 @@ export default function Home() {
           <h2 className="font-display font-semibold text-3xl md:text-4xl mt-3">Follow the Fragrance</h2>
         </div>
         <div className="grid grid-cols-3 md:grid-cols-6 gap-1">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {[
+            "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=600&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1595514535316-2495afc0ee06?q=80&w=600&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=600&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1615397323608-f40eaef04135?q=80&w=600&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=600&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1547887538-e3a2f32cb1cc?q=80&w=600&h=600&fit=crop",
+          ].map((src, i) => (
             <a
               key={i}
               href="https://instagram.com/aromiq.lk"
               target="_blank"
               rel="noreferrer"
-              className="aspect-square bg-gradient-to-br from-gold/15 to-panel2 flex items-center justify-center hover:opacity-90"
+              className="aspect-square bg-panel relative group overflow-hidden"
             >
-              <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6 text-gold opacity-70"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" /></svg>
+              <img src={src} alt={`Instagram ${i}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-80 group-hover:opacity-100" />
+              <div className="absolute inset-0 bg-ink/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-white"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" /></svg>
+              </div>
             </a>
           ))}
         </div>
       </section>
 
       {/* Newsletter */}
-      <section className="py-20 border-t border-line bg-gradient-to-b from-transparent to-ink text-center">
-        <div className="max-w-6xl mx-auto px-8">
-          <h2 className="font-display font-semibold text-3xl md:text-4xl mb-3">Join the Inner Circle</h2>
-          <p className="text-muted mb-8">New arrivals, exclusive discounts and launch drops — straight to your inbox.</p>
-          <form
-            className="flex max-w-md mx-auto border border-line"
-            onSubmit={(e) => { e.preventDefault(); alert("Thanks for subscribing!"); }}
-          >
-            <input type="email" required placeholder="Your email address" className="flex-1 bg-transparent px-5 py-4 text-sm text-warm outline-none" />
-            <button type="submit" className="px-7 bg-gold text-ink text-xs uppercase tracking-widest">Subscribe</button>
-          </form>
-        </div>
-      </section>
+      <NewsletterSection />
     </>
   );
 }
 
-/*cd aromiqlk-mern-project
-cd frontend*/
+function NewsletterSection() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState(null); // null | 'sending' | 'success' | 'error'
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus("sending");
+    try {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+      const res = await fetch(`${baseUrl}/newsletter/subscribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) throw new Error();
+      setStatus("success");
+      setEmail("");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  return (
+    <section className="py-20 border-t border-line bg-gradient-to-b from-transparent to-ink text-center">
+      <div className="max-w-6xl mx-auto px-8">
+        <h2 className="font-display font-semibold text-3xl md:text-4xl mb-3">Join the Inner Circle</h2>
+        <p className="text-muted mb-8">New arrivals, exclusive discounts and launch drops — straight to your inbox.</p>
+        <form className="flex max-w-md mx-auto border border-line" onSubmit={handleSubmit}>
+          <input
+            type="email" required placeholder="Your email address" value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="flex-1 bg-transparent px-5 py-4 text-sm text-warm outline-none"
+          />
+          <button type="submit" disabled={status === "sending"} className="px-7 bg-gold text-ink text-xs uppercase tracking-widest disabled:opacity-60">
+            {status === "sending" ? "..." : "Subscribe"}
+          </button>
+        </form>
+        {status === "success" && <p className="text-gold-bright text-sm mt-4">Thanks for subscribing!</p>}
+        {status === "error" && <p className="text-red-400 text-sm mt-4">Something went wrong — try again.</p>}
+      </div>
+    </section>
+  );
+}

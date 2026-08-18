@@ -6,12 +6,24 @@ export default function Contact() {
 
   const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleSubmit = (e) => {
+  const [status, setStatus] = useState(null); // null | 'sending' | 'success' | 'error'
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // UI-only for now — will POST to /api/contact once the backend is wired up
-    console.log("Contact form submitted:", form);
-    alert("Thanks for reaching out! We'll connect this form to the backend next.");
-    setForm({ fullName: "", phone: "", email: "", subject: "", message: "" });
+    setStatus("sending");
+    try {
+      const baseUrl = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+      const res = await fetch(`${baseUrl}/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error();
+      setStatus("success");
+      setForm({ fullName: "", phone: "", email: "", subject: "", message: "" });
+    } catch {
+      setStatus("error");
+    }
   };
 
   const infoRow = (icon, label, value) => (
@@ -96,17 +108,28 @@ export default function Contact() {
                 <label className="text-xs uppercase tracking-wider text-gold">Message</label>
                 <textarea name="message" value={form.message} onChange={handleChange} rows={5} placeholder="Write your message..." required className="bg-ink border border-line px-3.5 py-3 text-sm text-warm outline-none focus:border-gold resize-y" />
               </div>
-              <button type="submit" className="px-8 py-4 text-xs uppercase tracking-widest bg-gradient-to-br from-gold-bright to-gold-deep text-ink font-medium hover:brightness-110 transition">
-                Send Message
+              <button type="submit" disabled={status === "sending"} className="px-8 py-4 text-xs uppercase tracking-widest bg-gradient-to-br from-gold-bright to-gold-deep text-ink font-medium hover:brightness-110 transition disabled:opacity-60">
+                {status === "sending" ? "Sending..." : "Send Message"}
               </button>
+              {status === "success" && <p className="text-gold-bright text-sm">Thanks for reaching out — we'll be in touch soon.</p>}
+              {status === "error" && <p className="text-red-400 text-sm">Something went wrong — please try again.</p>}
             </form>
           </div>
 
         </div>
 
-        <div className="max-w-6xl mx-auto px-8">
-          <div className="aspect-[16/7] border border-line bg-panel flex items-center justify-center text-muted text-sm mt-16">
-            Google Map embed goes here (once a showroom/office address is confirmed)
+        <div className="max-w-6xl mx-auto px-8 relative mt-16">
+          <div className="aspect-[16/7] border border-line bg-panel relative overflow-hidden">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126743.58585973715!2d79.773803!3d6.9218386!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae253d10f7a7003%3A0x320b2e4d32d3838d!2sColombo%2C%20Sri%20Lanka!5e0!3m2!1sen!2sus!4v1714421151608!5m2!1sen!2sus"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="absolute inset-0 grayscale contrast-125 opacity-70 hover:opacity-100 hover:grayscale-0 transition duration-500"
+            ></iframe>
           </div>
         </div>
       </section>
